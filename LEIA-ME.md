@@ -23,10 +23,10 @@ Abrindo os arquivos agora, sem configurar nada, o site roda em MODO DEMONSTRAÇ�
 Abra `config.js` e cole as duas informações em SUPABASE_URL e SUPABASE_ANON_KEY.
 A chave anon pode ficar no site: ela não dá acesso às reservas, a segurança está nas regras do passo 1.
 
-### 3. Publicar (Netlify)
+### 3. Publicar (GitHub Pages)
 1. Crie conta em netlify.com > Add new site > Deploy manually.
 2. Arraste a pasta `site` inteira para a área indicada.
-3. O Netlify gera um endereço. A página dos hóspedes é a raiz, o painel é `/painel.html`.
+3. O GitHub Pages gera um endereço. A página dos hóspedes é a raiz, o painel é `/painel.html`.
 4. Opcional: em Domain management, troque o nome (ex.: beachclass01.netlify.app) ou conecte um domínio próprio.
 
 ### 4. Usar
