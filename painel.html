@@ -5,7 +5,7 @@
 <title>Painel BC01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -129,11 +129,12 @@ function vRates(){
   FIDS.forEach(fid=>{
     const c=flatCfg(fid),rs=S.rates.filter(r=>r.flat===fid).sort((a,b)=>a.type===b.type?(a.from_date||'').localeCompare(b.from_date||''):a.type==='especial'?-1:1);
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div>
-    <div class="grid2 stack" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"><label>Diária base, semana (R$)<input inputmode="decimal" data-flatfield="base" data-flat="${fid}" value="${c.base??''}" placeholder="ex.: 450"></label><label>Diária base, fim de semana (R$)<input inputmode="decimal" data-flatfield="base_we" data-flat="${fid}" value="${c.base_we??''}" placeholder="igual à semana"></label><label>Limpeza por hospedagem (R$)<input inputmode="decimal" data-flatfield="cleaning" data-flat="${fid}" value="${c.cleaning??''}" placeholder="ex.: 150"></label></div>
+    <div class="h3" style="margin:14px 0 8px">Diária base (por noite) e limpeza</div>
+    <div class="basegrid"><label>Semana (dom a qui)<input inputmode="decimal" data-flatfield="base" data-flat="${fid}" value="${c.base??''}" placeholder="ex.: 450"></label><label>Fim de semana (sex e sáb)<input inputmode="decimal" data-flatfield="base_we" data-flat="${fid}" value="${c.base_we??''}" placeholder="igual à semana"></label><label>Limpeza por hospedagem<input inputmode="decimal" data-flatfield="cleaning" data-flat="${fid}" value="${c.cleaning??''}" placeholder="ex.: 150"></label></div>
     <div class="row sb" style="margin-top:18px"><div class="h3" style="margin:0">Temporadas, feriados e datas especiais</div><div class="row"><button class="btn small" data-addrate="season" data-flat="${fid}">+ Temporada</button><button class="btn small" data-addrate="especial" data-flat="${fid}">+ Feriado / data especial</button></div></div><div class="ratelist">`;
     if(!rs.length)h+='<div class="empty">Nenhuma temporada ainda. A diária base vale para todas as datas.</div>';
     rs.forEach(r=>{const se=r.type==='season';
-      h+=`<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>${se?'Semana (R$)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (R$)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`});
+      h+=`<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>${se?'Semana (dom a qui)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (sex e sáb)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`});
     h+='</div></div>';
   });
   return ['Diárias','','',h+'</div>'];

@@ -334,3 +334,11 @@ tr:last-child td{border-bottom:0}
 .ratelist>div>:first-child{grid-column:1/-1}
 .ratelist>div>button{grid-column:1/-1;justify-self:end}
 .ratelist>div.se>label:nth-child(4),.ratelist>div.se>label:nth-child(5){grid-column:auto}
+
+.basegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end}
+.basegrid label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;line-height:1.2;min-width:0}
+.basegrid label input{width:100%}
+@media (max-width:560px){.basegrid{grid-template-columns:1fr 1fr}}
+.ratelist>.empty{display:block;grid-template-columns:none;border:0;padding:14px 0 4px;text-align:left}
+.ratelist>div.se{grid-template-columns:1fr 1fr}
+.ratelist>div label{min-width:0}
