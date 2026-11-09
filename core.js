@@ -77,5 +77,29 @@ const Data={
   },
   resetDemo(){try{localStorage.removeItem(KEY)}catch(e){}}
 };
-window.BC={C,Data,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid};
+
+
+/* Feriados: nacionais, estadual de Pernambuco (Data Magna) e pontos facultativos. Municipais não entram. */
+function easterMs(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return Date.UTC(y,mo-1,da)}
+const _HC={};
+function holidaysOf(y){
+  if(_HC[y])return _HC[y];const m={},fx=(mm,dd,n,t)=>{m[y+'-'+mm+'-'+dd]={n,t}},ad=(ms,n,t)=>{m[iso(ms)]={n,t}};
+  fx('01','01','Confraternização Universal','nac');fx('03','06','Data Magna de Pernambuco','est');fx('04','21','Tiradentes','nac');fx('05','01','Dia do Trabalho','nac');
+  fx('09','07','Independência do Brasil','nac');fx('10','12','Nossa Senhora Aparecida','nac');fx('11','02','Finados','nac');fx('11','15','Proclamação da República','nac');fx('11','20','Consciência Negra','nac');fx('12','25','Natal','nac');
+  const E=easterMs(y);ad(E-48*DAY,'Segunda de Carnaval','fac');ad(E-47*DAY,'Terça de Carnaval','fac');ad(E-46*DAY,'Quarta de Cinzas (até 14h)','fac');ad(E-2*DAY,'Sexta-feira Santa','nac');ad(E+60*DAY,'Corpus Christi','fac');
+  return _HC[y]=m;
+}
+const HTYPE={nac:'feriado nacional',est:'feriado estadual (PE)',fac:'ponto facultativo'};
+const holidayAt=d=>holidaysOf(+d.slice(0,4))[d]||null;
+function holidaysIn(a,b){const o=[];for(let t=T(a);t<=T(b);t+=DAY){const h=holidayAt(iso(t));if(h)o.push({d:iso(t),...h})}return o}
+/* Sugestões prontas para a aba Diárias: [nome, de, até] a partir de hoje, 18 meses */
+function holidaySuggestions(from){
+  const y=+from.slice(0,4),out=[];
+  [y,y+1,y+2].forEach(yy=>{const E=easterMs(yy);
+    Object.entries(holidaysOf(yy)).forEach(([d,h])=>{if((h.t!=='fac'||h.n.startsWith('Corpus'))&&h.n!=='Sexta-feira Santa')out.push([h.n+(h.t==='fac'?' (ponto facultativo)':''),d,d])});
+    out.push(['Carnaval '+yy,iso(E-50*DAY),iso(E-47*DAY)]);out.push(['Semana Santa '+yy,iso(E-2*DAY),iso(E)]);out.push(['Réveillon '+yy,yy+'-12-29',(yy+1)+'-01-02']);});
+  const lim=iso(T(from)+548*DAY);
+  return out.filter(x=>x[2]>=from&&x[1]<=lim).filter((x,i,a)=>a.findIndex(z=>z[0]===x[0]&&z[1]===x[1])===i&&!/^Segunda de Carnaval|^Terça de Carnaval|^Quarta de Cinzas/.test(x[0])).sort((a,b)=>a[1].localeCompare(b[1]));
+}
+window.BC={holidayAt,holidaysIn,holidaySuggestions,HTYPE,C,Data,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid};
 })();

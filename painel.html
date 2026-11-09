@@ -5,15 +5,15 @@
 <title>Painel BC01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
-<script src="core.js?v=2"></script>
+<script src="core.js?v=4"></script>
 <script>
 (function(){
-const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid}=BC;
+const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid,holidayAt,holidaysIn,holidaySuggestions,HTYPE}=BC;
 const $=s=>document.querySelector(s);
 const CATS=['Condomínio','Limpeza','Energia','Água','Internet','Manutenção','Enxoval e lavanderia','Reposição','IPTU','Outros'];
 const S={flats:{},rates:[],bookings:[],expenses:[]};
@@ -93,13 +93,13 @@ function vCal(){
     const occ=occMap(fid);let c=['D','S','T','Q','Q','S','S'].map(x=>`<div class="dow">${x}</div>`).join('');
     for(let i=0;i<lead;i++)c+='<div class="d out"></div>';
     for(let d=1;d<=days;d++){
-      const ds=`${calMonth}-${String(d).padStart(2,'0')}`,b=occ[ds];let cls='d';if(ds<td)cls+=' past';if(ds===td)cls+=' today';let nm='';
+      const ds=`${calMonth}-${String(d).padStart(2,'0')}`,b=occ[ds];let cls='d';if(ds<td)cls+=' past';if(ds===td)cls+=' today';let nm='';const hd=holidayAt(ds);if(hd)cls+=' hol '+hd.t;
       if(b){cls+=b.kind==='bloqueio'?' b':(b.status==='confirmada'?' c':' p');if(ds===b.checkin||d===1||new Date(T(ds)).getUTCDay()===0)nm=esc(b.kind==='bloqueio'?'Bloqueio':(b.guest||'').split(' ')[0])}
-      c+=`<button class="${cls}" data-day="${ds}" data-flat="${fid}" ${b?`data-bk="${b.id}"`:''} aria-label="${d} ${b?'ocupado':'livre'}"><span>${d}</span>${nm?`<span class="nm">${nm}</span>`:''}</button>`;
+      c+=`<button class="${cls}" data-day="${ds}" data-flat="${fid}" ${b?`data-bk="${b.id}"`:''} aria-label="${d} ${b?'ocupado':'livre'}${hd?', '+hd.n:''}" ${hd?`title="${esc(hd.n)} (${HTYPE[hd.t]})"`:''}><span>${d}${hd?'<i class="hdot"></i>':''}</span>${hd?`<span class="hn">${esc(hd.n)}</span>`:''}${nm?`<span class="nm">${nm}</span>`:''}</button>`;
     }
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div><div class="mon">${c}</div></div>`;
   });
-  h+=`</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Pré-reserva</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span>Toque num dia livre para reservar</span></div>`;
+  h+=`</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Pré-reserva</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span><i class="hdot" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Feriado (nacional, Data Magna de PE) · <i class="hdot fac" style="display:inline-block;vertical-align:1px;margin:0 5px 0 8px"></i>Ponto facultativo</span><span>Toque num dia livre para reservar</span></div>`;
   return ['Calendário',monthPill(calMonth,'mprev','mnext'),'<button class="btn" data-act="newblock">Bloquear datas</button><button class="btn primary" data-act="newres">Nova reserva</button>',h];
 }
 
@@ -131,7 +131,8 @@ function vRates(){
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div>
     <div class="h3" style="margin:14px 0 8px">Diária base (por noite) e limpeza</div>
     <div class="basegrid"><label>Semana (dom a qui)<input inputmode="decimal" data-flatfield="base" data-flat="${fid}" value="${c.base??''}" placeholder="ex.: 450"></label><label>Fim de semana (sex e sáb)<input inputmode="decimal" data-flatfield="base_we" data-flat="${fid}" value="${c.base_we??''}" placeholder="igual à semana"></label><label>Limpeza por hospedagem<input inputmode="decimal" data-flatfield="cleaning" data-flat="${fid}" value="${c.cleaning??''}" placeholder="ex.: 150"></label></div>
-    <div class="row sb" style="margin-top:18px"><div class="h3" style="margin:0">Temporadas, feriados e datas especiais</div><div class="row"><button class="btn small" data-addrate="season" data-flat="${fid}">+ Temporada</button><button class="btn small" data-addrate="especial" data-flat="${fid}">+ Feriado / data especial</button></div></div><div class="ratelist">`;
+    <div class="row sb" style="margin-top:18px"><div class="h3" style="margin:0">Temporadas, feriados e datas especiais</div><div class="row"><button class="btn small" data-addrate="season" data-flat="${fid}">+ Temporada</button><button class="btn small" data-addrate="especial" data-flat="${fid}">+ Feriado / data especial</button></div></div>
+    <label style="margin-top:10px">Adicionar feriado pronto (nacional e de Pernambuco)<select data-addhol data-flat="${fid}"><option value="">Escolha um feriado...</option>${holidaySuggestions(todayIso()).map(([n,a,b])=>`<option value="${a}|${b}|${esc(n)}">${dm(a)}${b!==a?' a '+dm(b):''} · ${esc(n)}</option>`).join('')}</select></label><div class="ratelist">`;
     if(!rs.length)h+='<div class="empty">Nenhuma temporada ainda. A diária base vale para todas as datas.</div>';
     rs.forEach(r=>{const se=r.type==='season';
       h+=`<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>${se?'Semana (dom a qui)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (sex e sáb)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`});
@@ -181,7 +182,7 @@ function quoteHtml(q){let h='';q.groups.forEach(g=>{h+=`<span>${g.nights} noite$
   return h+`<span class="t">Total</span><span class="t">${brl(q.total)}</span>`}
 const paysHtml=()=>!F.payments.length?'<div class="muted" style="padding:6px 0;font-size:13px">Nenhum pagamento lançado. Use + Pagamento para o sinal e o saldo.</div>':F.payments.map((p,i)=>`<div class="grid2" style="grid-template-columns:1fr 1fr auto;align-items:end"><label>Data<input type="date" data-pay="${i}" data-f="date" value="${p.date||''}"></label><label>Valor (R$)<input inputmode="decimal" data-pay="${i}" data-f="amount" value="${p.amount??''}"></label><button class="btn danger small" data-delpay="${i}" aria-label="Remover pagamento">×</button></div>`).join('');
 function msgText(){const q=calcF(),nm=(F.guest||'').split(' ')[0],L=[`Olá${nm?', '+nm:''}! Segue o orçamento do Beach Class ${FLATS[F.flat].name} (${FLATS[F.flat].loc}):`,`Entrada ${dmy(F.checkin)} · Saída ${dmy(F.checkout)} (${q.nights} noite${q.nights===1?'':'s'})`];q.groups.forEach(g=>L.push(`${g.nights} x ${brl(g.price)} (${g.name})`));L.push(`Diárias: ${brl(q.rent+q.adj)}`,`Taxa de limpeza: ${q.cleaning==null?'a definir':brl(q.cleaning)}`,`Total: ${brl(q.total)}`);return L.join('\n')}
-function warns(){const cf=conflicts(F.flat,F.checkin,F.checkout,F.id);return `${F.checkout<=F.checkin?'<div class="warnbox">A saída precisa ser depois da entrada.</div>':''}${cf.length&&F.status!=='cancelada'?`<div class="warnbox">Estas datas já estão ocupadas: ${cf.map(b=>`${esc(b.guest||'Bloqueio')} (${dm(b.checkin)} a ${dm(b.checkout)})`).join(', ')}.</div>`:''}${F.err?`<div class="warnbox">${esc(F.err)}</div>`:''}`}
+function warns(){const cf=conflicts(F.flat,F.checkin,F.checkout,F.id);const hs=F.checkout>F.checkin?holidaysIn(F.checkin,F.checkout):[];return `${hs.length?`<div class="infobox" style="margin-top:8px"><b>Feriados na estadia:</b> ${hs.map(h=>`${dm(h.d)} ${esc(h.n)} (${HTYPE[h.t]})`).join('; ')}. Se tiverem preço especial, cadastre em Diárias.</div>`:''}${F.checkout<=F.checkin?'<div class="warnbox">A saída precisa ser depois da entrada.</div>':''}${cf.length&&F.status!=='cancelada'?`<div class="warnbox">Estas datas já estão ocupadas: ${cf.map(b=>`${esc(b.guest||'Bloqueio')} (${dm(b.checkin)} a ${dm(b.checkout)})`).join(', ')}.</div>`:''}${F.err?`<div class="warnbox">${esc(F.err)}</div>`:''}`}
 function sheet(keep){
   const m=$('#modal');if(!F){m.innerHTML='';return}
   if(keep&&m.contains(document.activeElement))return;
@@ -269,6 +270,7 @@ document.addEventListener('change',async ev=>{
     if(t.id==='f-ci'){F.checkin=t.value;if(F.checkout<=F.checkin)F.checkout=iso(T(F.checkin)+DAY);sheet();return}if(t.id==='f-co'){F.checkout=t.value;live_();return}}
   if(F&&t.dataset.pay!==undefined){F.payments[+t.dataset.pay][t.dataset.f]=t.value;live_();return}
   if(t.dataset.flatfield){const fid=t.dataset.flat,cur=S.flats.find(x=>x.id===fid)||{id:fid,name:FLATS[fid].name,loc:FLATS[fid].loc};await put('flats',{...cur,[t.dataset.flatfield]:numIn(t.value)});return}
+  if(t.dataset.addhol!==undefined){if(!t.value)return;const [a,b,n]=t.value.split('|');await put('rates',{id:uuid(),flat:t.dataset.flat,type:'especial',name:n,from_date:a,to_date:b,price:null,price_we:null});return}
   if(t.dataset.rate){const r=S.rates.find(x=>x.id===t.dataset.rate);if(!r)return;const row={...r};let v=t.value;if(t.dataset.f==='price'||t.dataset.f==='price_we')v=numIn(v);if(v===''&&t.dataset.f!=='name')v=null;row[t.dataset.f]=v;await put('rates',row)}
 });
 
