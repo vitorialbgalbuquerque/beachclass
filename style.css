@@ -316,3 +316,8 @@ tr:last-child td{border-bottom:0}
 .lbs img{max-width:100%;max-height:82vh;border-radius:12px;object-fit:contain}
 .lbs figcaption{color:#fff;font-size:14px;margin-top:10px;font-weight:600}
 @media (max-width:360px){.am{grid-template-columns:1fr}}
+
+.vs figure.ls{background:#0b2a2e}
+.vs figure.ls img.bk{position:absolute;inset:0;filter:blur(22px) brightness(.7);transform:scale(1.15)}
+.vs figure.ls img:not(.bk){position:relative;object-fit:contain}
+.cats{padding-left:2px;padding-right:2px}
