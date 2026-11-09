@@ -4,7 +4,7 @@
 <title>Beach Class | Disponibilidade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head><body>
 <div class="pub">
   <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
@@ -57,6 +57,9 @@ const P={
  pool:'M2 19c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M2 14c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M9 12V5a2 2 0 014 0M15 12V5a2 2 0 014 0M9 8h6',
  drop:'M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z',
  cowork:'M5 6h14v9H5zM2 19h20',
+ bell:'M12 4v2M6 15a6 6 0 0112 0M4 18h16M3 21h18',
+ rest:'M7 3v8M4 3v5a3 3 0 006 0V3M7 11v10M17 3c-2 2-3 5-3 8h3v10',
+ bkf:'M4 8h13v6a5 5 0 01-5 5H9a5 5 0 01-5-5zM17 10h2a2 2 0 010 4h-2M7 2v3M11 2v3',
  gym:'M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12',
  ball:'M12 21a9 9 0 100-18 9 9 0 000 18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
  kids:'M12 21a9 9 0 100-18 9 9 0 000 18zM8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01',
@@ -80,7 +83,7 @@ const INFO={
   fotos:[["fotos/summer/01.jpg", "Área externa", "Jardim e piscina do condomínio"], ["fotos/summer/02.jpg", "Área externa", "Jardim com área de estar"], ["fotos/summer/03.jpg", "Área externa", "Jardim e fachada do prédio"], ["fotos/summer/04.jpg", "Área externa", "Área de estar no jardim"], ["fotos/summer/05.jpg", "Área externa", "Varanda com mesa para as refeições"], ["fotos/summer/06.jpg", "Área externa", "Varanda e vista do jardim"], ["fotos/summer/07.jpg", "Área externa", "Cozinha externa com pia e bancada"], ["fotos/summer/08.jpg", "Área externa", "Cozinha externa"], ["fotos/summer/09.jpg", "Sala", "Sala climatizada com sofá-cama"], ["fotos/summer/10.jpg", "Sala", "Sala integrada"], ["fotos/summer/11.jpg", "Sala", "Sala e mesa de jantar"], ["fotos/summer/12.jpg", "Sala", "Sofá-cama"], ["fotos/summer/13.jpg", "Sala", "Sala com acesso à varanda"], ["fotos/summer/14.jpg", "Sala", "Sala com TV"], ["fotos/summer/15.jpg", "Sala", "Mesa de jantar"], ["fotos/summer/16.jpg", "Sala", "Sala de jantar e cozinha"], ["fotos/summer/17.jpg", "Cozinha", "Cozinha equipada"], ["fotos/summer/18.jpg", "Cozinha", "Geladeira, micro-ondas e airfryer"], ["fotos/summer/19.jpg", "Cozinha", "Bancada da cozinha"], ["fotos/summer/20.jpg", "Cozinha", "Cozinha integrada à sala"], ["fotos/summer/21.jpg", "Quartos", "Quarto 1"], ["fotos/summer/22.jpg", "Quartos", "Quarto 1 com iluminação de apoio"], ["fotos/summer/23.jpg", "Quartos", "Cama de casal"], ["fotos/summer/24.jpg", "Quartos", "Quarto com TV"], ["fotos/summer/25.jpg", "Quartos", "Quarto com ar-condicionado e armário"], ["fotos/summer/26.jpg", "Quartos", "Quarto com TV"], ["fotos/summer/27.jpg", "Quartos", "Quarto 2 com duas camas de solteiro"], ["fotos/summer/28.jpg", "Quartos", "Quarto 2"], ["fotos/summer/29.jpg", "Quartos", "Quarto 2 com TV"], ["fotos/summer/30.jpg", "Banheiros", "Banheiro com box de vidro"], ["fotos/summer/31.jpg", "Banheiros", "Banheiro"], ["fotos/summer/32.jpg", "Banheiros", "Banheiro"]],
   desc:'Flat térreo com jardim e área de estar, pensado para o descanso do grupo todo. Varanda com mesa para as refeições, cozinha externa e sala climatizada com sofá-cama.',
   flat:[['users','Até 8 pessoas'],['bed','2 quartos'],['leaf','Térreo com jardim'],['table','Varanda com mesa'],['snow','Ar-condicionado'],['tv','TV'],['sofa','Sofá-cama na sala'],['kit','Cozinha equipada'],['cof','Airfryer e cafeteira']],
-  cond:[['pool','Piscinas adulto e infantil'],['drop','Parque aquático'],['cowork','Coworking'],['gym','Academia'],['ball','Quadras esportivas'],['kids','Brinquedoteca'],['wash','Lavanderia']],
+  cond:[['bell','Recepção 24 horas'],['rest','Restaurante'],['bkf','Café da manhã no restaurante (valor fixo)'],['pool','Piscinas adulto e infantil'],['drop','Parque aquático'],['cowork','Coworking'],['gym','Academia'],['ball','Quadras esportivas'],['kids','Brinquedoteca'],['wash','Lavanderia']],
   nota:[['beach','A poucos minutos a pé da Praia do Cupe'],['nopet','Não aceita animais de estimação']]},
  solare:{tag:'Flat C01',loc:'Muro Alto · Pernambuco',fotos:[],desc:'Flat térreo com jardim em Muro Alto, para até 8 pessoas. Fotos em breve.',flat:[['users','Até 8 pessoas'],['leaf','Térreo com jardim']],cond:[],nota:[['nopet','Não aceita animais de estimação']]}
 };
