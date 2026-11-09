@@ -84,7 +84,7 @@ function easterMs(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),
 const _HC={};
 function holidaysOf(y){
   if(_HC[y])return _HC[y];const m={},fx=(mm,dd,n,t)=>{m[y+'-'+mm+'-'+dd]={n,t}},ad=(ms,n,t)=>{m[iso(ms)]={n,t}};
-  fx('01','01','Confraternização Universal','nac');fx('03','06','Data Magna de Pernambuco','est');fx('04','21','Tiradentes','nac');fx('05','01','Dia do Trabalho','nac');
+  fx('01','01','Confraternização Universal','nac');fx('03','06','Data Magna de Pernambuco','est');fx('04','21','Tiradentes','nac');fx('06','24','São João','fac');fx('05','01','Dia do Trabalho','nac');
   fx('09','07','Independência do Brasil','nac');fx('10','12','Nossa Senhora Aparecida','nac');fx('11','02','Finados','nac');fx('11','15','Proclamação da República','nac');fx('11','20','Consciência Negra','nac');fx('12','25','Natal','nac');
   const E=easterMs(y);ad(E-48*DAY,'Segunda de Carnaval','fac');ad(E-47*DAY,'Terça de Carnaval','fac');ad(E-46*DAY,'Quarta de Cinzas (até 14h)','fac');ad(E-2*DAY,'Sexta-feira Santa','nac');ad(E+60*DAY,'Corpus Christi','fac');
   return _HC[y]=m;
@@ -96,7 +96,7 @@ function holidaysIn(a,b){const o=[];for(let t=T(a);t<=T(b);t+=DAY){const h=holid
 function holidaySuggestions(from){
   const y=+from.slice(0,4),out=[];
   [y,y+1,y+2].forEach(yy=>{const E=easterMs(yy);
-    Object.entries(holidaysOf(yy)).forEach(([d,h])=>{if((h.t!=='fac'||h.n.startsWith('Corpus'))&&h.n!=='Sexta-feira Santa')out.push([h.n+(h.t==='fac'?' (ponto facultativo)':''),d,d])});
+    Object.entries(holidaysOf(yy)).forEach(([d,h])=>{if((h.t!=='fac'||h.n.startsWith('Corpus')||h.n==='São João')&&h.n!=='Sexta-feira Santa')out.push([h.n+(h.t==='fac'?' (ponto facultativo)':''),d,d])});
     out.push(['Carnaval '+yy,iso(E-50*DAY),iso(E-47*DAY)]);out.push(['Semana Santa '+yy,iso(E-2*DAY),iso(E)]);out.push(['Réveillon '+yy,yy+'-12-29',(yy+1)+'-01-02']);});
   const lim=iso(T(from)+548*DAY);
   return out.filter(x=>x[2]>=from&&x[1]<=lim).filter((x,i,a)=>a.findIndex(z=>z[0]===x[0]&&z[1]===x[1])===i&&!/^Segunda de Carnaval|^Terça de Carnaval|^Quarta de Cinzas/.test(x[0])).sort((a,b)=>a[1].localeCompare(b[1]));
