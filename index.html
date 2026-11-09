@@ -4,7 +4,7 @@
 <title>Beach Class | Disponibilidade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head><body>
 <div class="pub">
   <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
@@ -89,7 +89,7 @@ const INFO={
   desc:'Flat térreo com jardim e área de estar, pensado para o descanso do grupo todo. Varanda com mesa para as refeições, cozinha externa e sala climatizada com sofá-cama.',
   flat:[['users','Até 8 pessoas'],['bed','2 quartos'],['wifi','Wi-Fi grátis'],['park','Estacionamento grátis'],['leaf','Térreo com jardim'],['table','Varanda com mesa'],['snow','Ar-condicionado'],['tv','TV'],['sofa','Sofá-cama na sala'],['kit','Cozinha equipada'],['micro','Micro-ondas'],['sand','Sanduicheira'],['cof','Airfryer e cafeteira'],['linen','Rouparia']],
   cond:[['bell','Recepção 24 horas'],['rest','Restaurante'],['bkf','Café da manhã no restaurante'],['pool','Piscinas adulto e infantil'],['drop','Parque aquático'],['cowork','Coworking'],['gym','Academia'],['ball','Quadras esportivas'],['kids','Brinquedoteca'],['wash','Lavanderia']],
-  cafe:[['Crianças até 5 anos','cortesia'],['Crianças de 6 a 10 anos','R$ 20,00 (todas as modalidades)'],['Reserva pelas plataformas, com 24 horas de antecedência','R$ 32,00 por pessoa'],['Clientes passantes','R$ 45,00 por pessoa']],
+  cafe:[['Crianças até 5 anos','cortesia'],['Crianças de 6 a 10 anos','R$ 20,00'],['Adultos','R$ 45,00 por pessoa'],['Adultos, reservando direto com o restaurante com 24 horas de antecedência','R$ 32,00 por pessoa']],
   nota:[['beach','A poucos minutos a pé da Praia do Cupe'],['nopet','Não aceita animais de estimação']]},
  solare:{tag:'Flat C01',loc:'Muro Alto · Pernambuco',fotos:[],desc:'Flat térreo com jardim em Muro Alto, para até 8 pessoas. Fotos em breve.',flat:[['users','Até 8 pessoas'],['leaf','Térreo com jardim']],cond:[],nota:[['nopet','Não aceita animais de estimação']]}
 };
@@ -106,7 +106,7 @@ function about(){
   h+=`<span class="tag">${i.tag}</span><h2 class="nm">Beach Class ${FLATS[flat].name.split(' ')[0]}</h2><div class="where">${ic('pin')}<span>${i.loc}</span></div><p class="ds">${i.desc}</p>`;
   h+=`<h3>Principais comodidades</h3><ul class="am">${lis(i.flat)}</ul>`;
   if(i.cond.length)h+=`<h3>No condomínio</h3><ul class="am">${lis(i.cond)}</ul>`;
-  if(i.cafe)h+=`<h3>Café da manhã no restaurante</h3><div class="cafe">${i.cafe.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('')}</div><p class="cn">Valores cobrados pelo restaurante do condomínio, por pessoa.</p>`;
+  if(i.cafe)h+=`<h3>Café da manhã no restaurante</h3><div class="cafe">${i.cafe.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('')}</div><p class="cn">Valores do restaurante do condomínio, pagos direto a ele.</p>`;
   h+=`<ul class="am nt">${lis(i.nota)}</ul>`;
   document.getElementById('about').innerHTML=h;
 }
