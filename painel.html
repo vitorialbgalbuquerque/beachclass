@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Painel BC01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="app"></div><div id="modal"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script>
+(function(){
+const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid}=BC;
+const $=s=>document.querySelector(s);
+const CATS=['Condomínio','Limpeza','Energia','Água','Internet','Manutenção','Enxoval e lavanderia','Reposição','IPTU','Outros'];
+const S={flats:{},rates:[],bookings:[],expenses:[]};
+let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',F=null,E=null,msg='';
+
+const ICON={
+ cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+ res:'<svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg>',
+ rates:'<svg viewBox="0 0 24 24"><path d="M3 12l9-9h8v8l-9 9z"/><circle cx="15.5" cy="8.5" r="1.3"/></svg>',
+ fin:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+ site:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+ pct:'<svg viewBox="0 0 24 24"><path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg>',
+ in:'<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>',
+ cash:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>',
+ up:'<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
+ down:'<svg viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8M15 17h6v-6"/></svg>'};
+const TABS=[['cal','Calendário'],['res','Reservas'],['rates','Diárias'],['fin','Finanças'],['site','Site dos hóspedes']];
+
+/* ---------- regras de preço ---------- */
+const flatCfg=id=>{const f=S.flats.find?S.flats.find(x=>x.id===id):null;return {base:f?.base??null,cleaning:f?.cleaning??null}};
+const inSeason=(a,b,x)=>a<=b?(x>=a&&x<=b):(x>=a||x<=b);
+function nightRate(fid,d){
+  const rs=S.rates.filter(r=>r.flat===fid&&r.price!=null&&r.from_date&&r.to_date);
+  const e=rs.find(r=>r.type==='especial'&&r.from_date<=d&&d<=r.to_date);if(e)return {p:+e.price,n:e.name||'Data especial'};
+  const md=d.slice(5),s=rs.find(r=>r.type==='season'&&inSeason(r.from_date.slice(5),r.to_date.slice(5),md));if(s)return {p:+s.price,n:s.name||'Temporada'};
+  const b=flatCfg(fid).base;return {p:b==null?null:+b,n:'Diária base'};
+}
+function quote(fid,ci,co){
+  const q={nights:0,rent:0,groups:[],missing:0,cleaning:flatCfg(fid).cleaning==null?null:+flatCfg(fid).cleaning};
+  if(!ci||!co||co<=ci)return q;const g={};
+  for(let t=T(ci);t<T(co);t+=DAY){const r=nightRate(fid,iso(t));q.nights++;if(r.p==null){q.missing++;continue}const k=r.n+'|'+r.p;g[k]=g[k]||{name:r.n,price:r.p,nights:0};g[k].nights++;q.rent+=r.p}
+  q.groups=Object.values(g);return q;
+}
+const paid=b=>(b.payments||[]).reduce((s,p)=>s+(Number(p.amount)||0),0);
+const live=b=>b.status!=='cancelada';
+const conflicts=(fid,ci,co,ex)=>S.bookings.filter(b=>b.id!==ex&&b.flat===fid&&live(b)&&ci<b.checkout&&co>b.checkin);
+function occMap(fid){const m={};S.bookings.filter(b=>b.flat===fid&&live(b)).forEach(b=>{for(let t=T(b.checkin);t<T(b.checkout);t+=DAY)m[iso(t)]=b});return m}
+
+/* ---------- dados ---------- */
+async function reload(){try{Object.assign(S,await Data.loadAll())}catch(e){msg='Não foi possível carregar os dados. Confira a conexão.'}render()}
+async function put(table,row){try{await Data.save(table,row);await reload();return true}catch(e){alert_('Não foi possível salvar: '+(e.message||'erro'));return false}}
+async function drop(table,id){try{await Data.remove(table,id);await reload();return true}catch(e){alert_('Não foi possível excluir.');return false}}
+function alert_(t){msg=t;render()}
+
+/* ---------- casca ---------- */
+function shell(title,mid,actions,body){
+  return `<div class="shell"><aside class="side"><div class="logo"><div class="logo-m">BC</div><span>Beach Class</span></div>
+  <nav class="nav" role="tablist">${TABS.map(([k,l])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${ICON[k]}<span>${l}</span></button>`).join('')}</nav>
+  <div class="side-foot"><span>${esc(me?.email||'')}</span><button class="btn small" data-act="logout">Sair</button>${Data.live?'':'<span class="tag t-warn">Modo demonstração</span>'}</div></aside>
+  <main class="main"><div class="main-in"><div class="top"><h1>${title}</h1><div>${mid||''}</div><div class="actions">${actions||''}</div></div>${msg?`<div class="notice"><span>${esc(msg)}</span><button class="btn small" data-act="clearmsg">Ok</button></div>`:''}${body}</div></main></div>`;
+}
+const monthPill=(ym,p,n)=>{const [y,m]=ym.split('-').map(Number);return `<div class="month"><button data-act="${p}" aria-label="Mês anterior">‹</button><b>${MESES[m-1]} ${y}</b><button data-act="${n}" aria-label="Próximo mês">›</button></div>`};
+const kpi=(l,v,s,ic,col)=>`<div class="card kpi c4" style="--ic:${col}"><div class="l">${l}</div><div class="v">${v}</div><div class="ico">${ICON[ic]}</div><div class="s">${s||''}</div></div>`;
+
+function render(){
+  const app=$('#app');
+  if(me===false){app.innerHTML=loginHtml();return}
+  if(!me){app.innerHTML='';return}
+  const v={cal:vCal,res:vRes,rates:vRates,fin:vFin,site:vSite}[tab]();
+  app.innerHTML=shell(...v);
+  if(F)sheet(true);
+}
+function loginHtml(){return `<div class="login"><form class="card" id="loginf"><div class="logo"><div class="logo-m">BC</div><span>Painel Beach Class</span></div><h1>Entrar</h1><div class="muted" style="font-size:14px">Acesso restrito aos administradores.</div>
+ <label>E-mail<input id="lg-email" type="email" autocomplete="username" required></label><label>Senha<input id="lg-pw" type="password" autocomplete="current-password" required></label>
+ ${msg?`<div class="warnbox">${esc(msg)}</div>`:''}<button class="btn primary" style="justify-content:center">Entrar</button></form></div>`}
+
+/* ---------- calendário ---------- */
+function vCal(){
+  const [y,m]=calMonth.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),lead=new Date(Date.UTC(y,m-1,1)).getUTCDay(),td=todayIso();
+  const st=monthStats(calMonth),nxt=S.bookings.filter(b=>b.kind==='reserva'&&b.status!=='cancelada'&&b.checkin>=td).sort((a,b)=>a.checkin.localeCompare(b.checkin))[0];
+  const open=S.bookings.filter(b=>b.kind==='reserva'&&b.status==='confirmada'&&b.total-paid(b)>0.005).reduce((s,b)=>s+b.total-paid(b),0);
+  let h=`<div class="grid">${kpi('Ocupação do mês',st.occPct.toFixed(0)+'%',`${st.occ} noites ocupadas${st.blk?`, ${st.blk} bloqueadas`:''}`,'pct','#1B8F94')}${kpi('Próxima entrada',nxt?dm(nxt.checkin):'—',nxt?`${esc(nxt.guest||'Sem nome')} · ${FLATS[nxt.flat].name}`:'Nenhuma reserva futura','in','#C79A3B')}${kpi('A receber',brl(open),'Saldo das reservas confirmadas','cash','#E5484D')}</div><div class="grid">`;
+  FIDS.forEach(fid=>{
+    const occ=occMap(fid);let c=['D','S','T','Q','Q','S','S'].map(x=>`<div class="dow">${x}</div>`).join('');
+    for(let i=0;i<lead;i++)c+='<div class="d out"></div>';
+    for(let d=1;d<=days;d++){
+      const ds=`${calMonth}-${String(d).padStart(2,'0')}`,b=occ[ds];let cls='d';if(ds<td)cls+=' past';if(ds===td)cls+=' today';let nm='';
+      if(b){cls+=b.kind==='bloqueio'?' b':(b.status==='confirmada'?' c':' p');if(ds===b.checkin||d===1||new Date(T(ds)).getUTCDay()===0)nm=esc(b.kind==='bloqueio'?'Bloqueio':(b.guest||'').split(' ')[0])}
+      c+=`<button class="${cls}" data-day="${ds}" data-flat="${fid}" ${b?`data-bk="${b.id}"`:''} aria-label="${d} ${b?'ocupado':'livre'}"><span>${d}</span>${nm?`<span class="nm">${nm}</span>`:''}</button>`;
+    }
+    h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div><div class="mon">${c}</div></div>`;
+  });
+  h+=`</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Pré-reserva</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span>Toque num dia livre para reservar</span></div>`;
+  return ['Calendário',monthPill(calMonth,'mprev','mnext'),'<button class="btn" data-act="newblock">Bloquear datas</button><button class="btn primary" data-act="newres">Nova reserva</button>',h];
+}
+
+/* ---------- reservas ---------- */
+function vRes(){
+  const td=todayIso();let l=S.bookings.slice();
+  if(resFilter==='next')l=l.filter(b=>b.checkout>=td&&live(b)).sort((a,b)=>a.checkin.localeCompare(b.checkin));
+  else if(resFilter==='past')l=l.filter(b=>b.checkout<td&&live(b)).sort((a,b)=>b.checkin.localeCompare(a.checkin));
+  else l=l.filter(b=>!live(b)).sort((a,b)=>b.checkin.localeCompare(a.checkin));
+  const open=S.bookings.filter(b=>b.kind==='reserva'&&b.status==='confirmada'&&b.total-paid(b)>0.005);
+  let h='';
+  if(open.length)h+=`<div class="notice"><span>A receber de reservas confirmadas: <b>${brl(open.reduce((s,b)=>s+b.total-paid(b),0))}</b> em ${open.length} reserva${open.length>1?'s':''}.</span></div>`;
+  h+=`<div class="card"><div class="seg" style="margin-bottom:8px">${[['next','Próximas'],['past','Passadas'],['canc','Canceladas']].map(([k,t])=>`<button data-filter="${k}" aria-pressed="${resFilter===k}">${t}</button>`).join('')}</div>`;
+  if(!l.length)h+=`<div class="empty">${resFilter==='next'?'Nenhuma reserva futura. Use Nova reserva ou escolha um dia no calendário.':'Nada por aqui.'}</div>`;
+  l.forEach(b=>{
+    const n=nightsBetween(b.checkin,b.checkout),ini=(b.kind==='bloqueio'?'B':(b.guest||'?')[0]).toUpperCase();
+    if(b.kind==='bloqueio')h+=`<div class="item" data-bk="${b.id}"><div class="av" style="--c:#6F6B68">${ini}</div><div><b>Bloqueio: ${esc(b.guest||'dos donos')}</b><span class="muted">${FLATS[b.flat].name} · ${dm(b.checkin)} a ${dm(b.checkout)} · ${n} noite${n>1?'s':''}</span></div><div class="r"><span class="tag t-block">Bloqueado</span></div></div>`;
+    else{const sal=b.total-paid(b),pill=!live(b)?'<span class="tag t-bad">Cancelada</span>':b.status==='pre'?'<span class="tag t-warn">Pré-reserva</span>':(sal>0.005?`<span class="tag t-warn">Saldo ${brl(sal)}</span>`:'<span class="tag t-ok">Quitada</span>');
+      h+=`<div class="item" data-bk="${b.id}"><div class="av">${esc(ini)}</div><div><b>${esc(b.guest||'Sem nome')}</b><span class="muted">${FLATS[b.flat].name} · ${dm(b.checkin)} a ${dm(b.checkout)} · ${n} noite${n>1?'s':''}${b.guests?` · ${b.guests} pessoas`:''}</span></div><div class="r"><b>${brl(b.total)}</b>${pill}</div></div>`}
+  });
+  return ['Reservas','','<button class="btn primary" data-act="newres">Nova reserva</button>',h+'</div>'];
+}
+
+/* ---------- diárias ---------- */
+function vRates(){
+  let h='<div class="infobox">A diária de cada noite vem, nesta ordem, de: data especial, temporada, diária base. A limpeza é um valor fixo por hospedagem, somado uma vez ao total.</div><div class="grid">';
+  FIDS.forEach(fid=>{
+    const c=flatCfg(fid),rs=S.rates.filter(r=>r.flat===fid).sort((a,b)=>a.type===b.type?(a.from_date||'').localeCompare(b.from_date||''):a.type==='especial'?-1:1);
+    h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div>
+    <div class="grid2 stack"><label>Diária base (R$)<input inputmode="decimal" data-flatfield="base" data-flat="${fid}" value="${c.base??''}" placeholder="ex.: 450"></label><label>Limpeza por hospedagem (R$)<input inputmode="decimal" data-flatfield="cleaning" data-flat="${fid}" value="${c.cleaning??''}" placeholder="ex.: 150"></label></div>
+    <div class="row sb" style="margin-top:18px"><div class="h3" style="margin:0">Temporadas e datas especiais</div><div class="row"><button class="btn small" data-addrate="season" data-flat="${fid}">+ Temporada</button><button class="btn small" data-addrate="especial" data-flat="${fid}">+ Data especial</button></div></div><div class="ratelist">`;
+    if(!rs.length)h+='<div class="empty">Nenhuma temporada ainda. A diária base vale para todas as datas.</div>';
+    rs.forEach(r=>{const se=r.type==='season';
+      h+=`<div><label>${se?'Temporada (repete todo ano)':'Data especial'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>Diária (R$)<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label><button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`});
+    h+='</div></div>';
+  });
+  return ['Diárias','','',h+'</div>'];
+}
+
+/* ---------- finanças ---------- */
+function monthStats(ym,fid){
+  const bk=S.bookings.filter(b=>b.kind==='reserva'&&b.status==='confirmada'&&(!fid||b.flat===fid));
+  const rev=bk.filter(b=>b.checkin.slice(0,7)===ym).reduce((s,b)=>s+(+b.total||0),0);
+  const cash=S.bookings.filter(b=>b.kind==='reserva'&&live(b)&&(!fid||b.flat===fid)).reduce((s,b)=>s+(b.payments||[]).filter(p=>(p.date||'').slice(0,7)===ym).reduce((x,p)=>x+(Number(p.amount)||0),0),0);
+  let exp=0;S.expenses.filter(e=>(e.date||'').slice(0,7)===ym).forEach(e=>{const a=+e.amount||0;if(!fid)exp+=a;else if(e.flat===fid)exp+=a;else if(e.flat==='ambos')exp+=a/2});
+  const [y,m]=ym.split('-').map(Number),dd=new Date(Date.UTC(y,m,0)).getUTCDate();let occ=0,blk=0;
+  S.bookings.filter(b=>live(b)&&(!fid||b.flat===fid)).forEach(b=>{if(b.kind==='reserva'&&b.status!=='confirmada')return;for(let t=T(b.checkin);t<T(b.checkout);t+=DAY)if(iso(t).slice(0,7)===ym){b.kind==='bloqueio'?blk++:occ++}});
+  return {rev,cash,exp,profit:rev-exp,occ,blk,occPct:occ/(dd*(fid?1:2))*100};
+}
+function vFin(){
+  const [y]=finMonth.split('-').map(Number),a=monthStats(finMonth),open=S.bookings.filter(b=>b.kind==='reserva'&&b.status==='confirmada'&&b.total-paid(b)>0.005).reduce((s,b)=>s+b.total-paid(b),0);
+  let h=`<div class="grid">${kpi('Lucro do mês',`<span class="${a.profit<0?'neg':''}">${brl(a.profit)}</span>`,'Receita menos despesas','up','#22A04B')}${kpi('Receita',brl(a.rev),'Reservas confirmadas com entrada no mês','cash','#1B8F94')}${kpi('Despesas',brl(a.exp),'Lançadas no mês','down','#E5484D')}${kpi('Recebido no mês',brl(a.cash),'Pagamentos com data no mês','in','#2F6FDB')}${kpi('A receber',brl(open),'Saldo de todas as reservas confirmadas','cash','#C79A3B')}${kpi('Ocupação',a.occPct.toFixed(0)+'%',`${a.occ} noites`,'pct','#7A4FD1')}</div>`;
+  h+=`<div class="grid"><div class="card c12"><h2>Por flat</h2><div class="sub">Despesas lançadas em "Os dois" são divididas igualmente.</div><div class="tw"><table><tr><th></th><th>Receita</th><th>Despesas</th><th>Lucro</th><th>Noites</th></tr>${FIDS.map(f=>{const s=monthStats(finMonth,f);return `<tr><td>${FLATS[f].name}</td><td>${brl(s.rev)}</td><td>${brl(s.exp)}</td><td class="${s.profit<0?'neg':''}">${brl(s.profit)}</td><td>${s.occ}${s.blk?` (+${s.blk} bloq.)`:''}</td></tr>`}).join('')}</table></div></div>`;
+  const rows=[];for(let i=0;i<12;i++)rows.push(monthStats(`${y}-${String(i+1).padStart(2,'0')}`));
+  const mx=Math.max(1,...rows.flatMap(s=>[s.rev,s.exp])),yr=rows.reduce((s,x)=>s+x.rev,0),ye=rows.reduce((s,x)=>s+x.exp,0);
+  h+=`<div class="card c12"><div class="card-h"><h2>${y} mês a mês</h2><span class="muted" style="font-size:13px"><i class="swd" style="background:var(--accent)"></i>receita<i class="swd" style="background:var(--sand)"></i>despesas</span></div><div class="bars">${rows.map((s,i)=>`<div class="bar"><div class="pair"><span class="rv" style="height:${s.rev/mx*100}%"></span><span class="ex" style="height:${s.exp/mx*100}%"></span></div><small>${MS[i]}</small></div>`).join('')}</div><div class="muted" style="margin-top:10px;font-size:13px">No ano: receita ${brl(yr)} · despesas ${brl(ye)} · lucro <b class="${yr-ye<0?'neg':'pos'}">${brl(yr-ye)}</b></div></div>`;
+  const ex=S.expenses.filter(e=>(e.date||'').slice(0,7)===finMonth).sort((a,b)=>b.date.localeCompare(a.date));
+  h+=`<div class="card c12"><h2>Despesas do mês</h2>`;
+  if(!ex.length)h+='<div class="empty">Nenhuma despesa lançada neste mês.</div>';
+  ex.forEach(e=>{h+=`<div class="item" data-exp="${e.id}"><div class="av" style="--c:#E5484D">${esc((e.cat||'?')[0])}</div><div><b>${esc(e.descr||e.cat)}</b><span class="muted">${dm(e.date)} · ${esc(e.cat||'')} · ${e.flat==='ambos'?'Os dois':FLATS[e.flat]?.name||''}</span></div><div class="r"><b>${brl(e.amount)}</b></div></div>`});
+  return ['Finanças',monthPill(finMonth,'fprev','fnext'),'<button class="btn primary" data-act="newexp">Lançar despesa</button>',h+'</div></div>'];
+}
+
+/* ---------- site ---------- */
+function vSite(){
+  const url=location.href.replace(/painel\.html.*$/,'');
+  return ['Site dos hóspedes','','',`<div class="grid"><div class="card c7"><h2>Página pública</h2><div class="sub">Mostra só os dias livres e ocupados dos dois flats. O hóspede escolhe as datas e chama no WhatsApp.</div><div class="linkbox" id="sitelink">${esc(url)}</div><div class="row" style="margin-top:12px"><button class="btn primary" data-act="copysite">Copiar link</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a></div></div>
+  <div class="card c5"><h2>O que o hóspede vê</h2><div class="sub">Em tempo real, a partir das suas reservas.</div><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px"><li>Reservas confirmadas, pré-reservas e bloqueios aparecem como ocupado.</li><li>Reserva cancelada libera as datas.</li><li>Nomes, valores e pagamentos nunca aparecem.</li><li>Quem não tem login não consegue editar nada.</li></ul></div></div>`];
+}
+
+/* ---------- janela de reserva ---------- */
+function newForm(kind,flat,ci){const d=ci||todayIso();F={id:null,kind,flat:flat||'summer',guest:'',phone:'',guests:'',checkin:d,checkout:iso(T(d)+DAY*(kind==='bloqueio'?1:2)),status:'confirmada',adjust:'',notes:'',payments:[],confirmDelete:false,err:''};sheet()}
+function editForm(id){const b=S.bookings.find(x=>x.id===id);if(!b)return;F={...b,adjust:b.adjust||'',guests:b.guests||'',payments:(b.payments||[]).map(p=>({...p})),confirmDelete:false,err:''};sheet()}
+const calcF=()=>{const q=quote(F.flat,F.checkin,F.checkout),adj=numIn(F.adjust)||0;return {...q,adj,total:q.rent+(q.cleaning||0)+adj}};
+function quoteHtml(q){let h='';q.groups.forEach(g=>{h+=`<span>${g.nights} noite${g.nights>1?'s':''} · ${esc(g.name)} · ${brl(g.price)}</span><span>${brl(g.nights*g.price)}</span>`});
+  if(q.missing)h+=`<span class="neg" style="grid-column:1/-1">${q.missing} noite${q.missing>1?'s':''} sem diária definida. Preencha a aba Diárias.</span>`;
+  h+=`<span>Limpeza (valor fixo)</span><span>${q.cleaning==null?'<span class="neg">definir</span>':brl(q.cleaning)}</span>`;if(q.adj)h+=`<span>Ajuste</span><span>${brl(q.adj)}</span>`;
+  return h+`<span class="t">Total</span><span class="t">${brl(q.total)}</span>`}
+const paysHtml=()=>!F.payments.length?'<div class="muted" style="padding:6px 0;font-size:13px">Nenhum pagamento lançado. Use + Pagamento para o sinal e o saldo.</div>':F.payments.map((p,i)=>`<div class="grid2" style="grid-template-columns:1fr 1fr auto;align-items:end"><label>Data<input type="date" data-pay="${i}" data-f="date" value="${p.date||''}"></label><label>Valor (R$)<input inputmode="decimal" data-pay="${i}" data-f="amount" value="${p.amount??''}"></label><button class="btn danger small" data-delpay="${i}" aria-label="Remover pagamento">×</button></div>`).join('');
+function msgText(){const q=calcF(),nm=(F.guest||'').split(' ')[0],L=[`Olá${nm?', '+nm:''}! Segue o orçamento do Beach Class ${FLATS[F.flat].name} (${FLATS[F.flat].loc}):`,`Entrada ${dmy(F.checkin)} · Saída ${dmy(F.checkout)} (${q.nights} noite${q.nights===1?'':'s'})`];q.groups.forEach(g=>L.push(`${g.nights} x ${brl(g.price)} (${g.name})`));L.push(`Diárias: ${brl(q.rent+q.adj)}`,`Taxa de limpeza: ${q.cleaning==null?'a definir':brl(q.cleaning)}`,`Total: ${brl(q.total)}`);return L.join('\n')}
+function warns(){const cf=conflicts(F.flat,F.checkin,F.checkout,F.id);return `${F.checkout<=F.checkin?'<div class="warnbox">A saída precisa ser depois da entrada.</div>':''}${cf.length&&F.status!=='cancelada'?`<div class="warnbox">Estas datas já estão ocupadas: ${cf.map(b=>`${esc(b.guest||'Bloqueio')} (${dm(b.checkin)} a ${dm(b.checkout)})`).join(', ')}.</div>`:''}${F.err?`<div class="warnbox">${esc(F.err)}</div>`:''}`}
+function sheet(keep){
+  const m=$('#modal');if(!F){m.innerHTML='';return}
+  if(keep&&m.contains(document.activeElement))return;
+  const bl=F.kind==='bloqueio',n=nightsBetween(F.checkin,F.checkout),q=calcF(),sal=q.total-F.payments.reduce((s,p)=>s+(Number(p.amount)||0),0);
+  m.innerHTML=`<div class="scrim" data-scrim><div class="sheet" role="dialog"><div class="row sb"><h2 style="margin:0">${bl?(F.id?'Editar bloqueio':'Novo bloqueio'):(F.id?'Editar reserva':'Nova reserva')}</h2><button class="btn small" data-act="closesheet">Fechar</button></div>
+  <div class="grid2 stack"><label>Flat<select id="f-flat">${FIDS.map(f=>`<option value="${f}" ${F.flat===f?'selected':''}>${FLATS[f].name}</option>`).join('')}</select></label>
+  ${bl?`<label>Motivo<input id="f-guest" value="${esc(F.guest)}" placeholder="Uso dos donos"></label>`:`<label>Situação<select id="f-status"><option value="confirmada" ${F.status==='confirmada'?'selected':''}>Confirmada</option><option value="pre" ${F.status==='pre'?'selected':''}>Pré-reserva</option><option value="cancelada" ${F.status==='cancelada'?'selected':''}>Cancelada</option></select></label>`}</div>
+  <div class="grid2"><label>Entrada<input type="date" id="f-ci" value="${F.checkin}"></label><label>Saída<input type="date" id="f-co" value="${F.checkout}"></label></div>
+  <div class="muted" style="margin-top:6px;font-size:13px" id="f-nights">${n} noite${n===1?'':'s'}</div><div id="f-warn">${warns()}</div>
+  ${bl?`<label style="margin-top:10px">Observação<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>`:`
+  <div class="grid2"><label>Hóspede<input id="f-guest" value="${esc(F.guest)}" placeholder="Nome"></label><label>WhatsApp<input id="f-phone" inputmode="tel" value="${esc(F.phone||'')}" placeholder="81 90000-0000"></label></div>
+  <div class="grid2"><label>Pessoas (até 8)<input id="f-guests" inputmode="numeric" value="${esc(F.guests)}"></label><label>Ajuste (R$, negativo = desconto)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label></div>
+  <div class="box"><div class="h3">Valores</div><div class="quote" id="f-quote">${quoteHtml(q)}</div></div>
+  <div class="box"><div class="row sb"><div class="h3" style="margin:0">Pagamentos</div><button class="btn small" data-act="addpay">+ Pagamento</button></div><div id="f-pays">${paysHtml()}</div><div class="row sb" style="margin-top:10px"><span class="muted">Saldo a receber</span><b id="f-saldo" class="${sal>0.005?'neg':'pos'}">${brl(sal)}</b></div></div>
+  <label style="margin-top:12px">Observações<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>
+  <div class="box"><div class="row sb"><div class="h3" style="margin:0">Mensagem para o hóspede</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div>`}
+  <div class="row" style="margin-top:16px"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">Salvar</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
+}
+function live_(){
+  const q=calcF(),n=nightsBetween(F.checkin,F.checkout),set=(i,h)=>{const e=$(i);if(e)e.innerHTML=h};
+  set('#f-nights',`${n} noite${n===1?'':'s'}`);set('#f-warn',warns());
+  if(F.kind!=='bloqueio'){set('#f-quote',quoteHtml(q));const sal=q.total-F.payments.reduce((s,p)=>s+(Number(p.amount)||0),0),e=$('#f-saldo');if(e){e.textContent=brl(sal);e.className=sal>0.005?'neg':'pos'}const t=$('#f-msg');if(t)t.value=msgText()}
+}
+async function saveSheet(){
+  F.err='';
+  if(F.checkout<=F.checkin){F.err='A saída precisa ser depois da entrada.';sheet();return}
+  if(F.status!=='cancelada'&&conflicts(F.flat,F.checkin,F.checkout,F.id).length){F.err='Há outra reserva ou bloqueio nessas datas.';sheet();return}
+  let row;
+  if(F.kind==='bloqueio')row={id:F.id||uuid(),kind:'bloqueio',flat:F.flat,guest:F.guest||'Uso dos donos',checkin:F.checkin,checkout:F.checkout,status:'confirmada',notes:F.notes||''};
+  else{const q=calcF();row={id:F.id||uuid(),kind:'reserva',flat:F.flat,guest:F.guest||'',phone:F.phone||'',guests:numIn(F.guests),checkin:F.checkin,checkout:F.checkout,status:F.status,adjust:q.adj,rent:q.rent,cleaning:q.cleaning||0,total:q.total,payments:F.payments.filter(p=>p.date||p.amount).map(p=>({date:p.date||'',amount:numIn(p.amount)||0})),notes:F.notes||''}}
+  if(await put('bookings',row)){F=null;sheet()}else{F.err='Não foi possível salvar. Tente de novo.';sheet()}
+}
+
+/* ---------- janela de despesa ---------- */
+function expSheet(e){
+  E=e?{...e}:{id:null,date:todayIso(),flat:'ambos',cat:'Condomínio',descr:'',amount:'',confirmDelete:false};
+  $('#modal').innerHTML=`<div class="scrim" data-scrim><div class="sheet" role="dialog"><div class="row sb"><h2 style="margin:0">${E.id?'Editar':'Nova'} despesa</h2><button class="btn small" data-act="closeexp">Fechar</button></div>
+  <div class="grid2"><label>Data<input type="date" id="e-date" value="${E.date}"></label><label>Valor (R$)<input id="e-amount" inputmode="decimal" value="${E.amount??''}"></label></div>
+  <div class="grid2"><label>Flat<select id="e-flat"><option value="ambos" ${E.flat==='ambos'?'selected':''}>Os dois</option>${FIDS.map(f=>`<option value="${f}" ${E.flat===f?'selected':''}>${FLATS[f].name}</option>`).join('')}</select></label><label>Categoria<select id="e-cat">${CATS.map(c=>`<option ${E.cat===c?'selected':''}>${c}</option>`).join('')}</select></label></div>
+  <label style="margin-top:10px">Descrição<input id="e-desc" value="${esc(E.descr||'')}" placeholder="ex.: condomínio de dezembro"></label>
+  <div class="row" style="margin-top:16px"><button class="btn primary" data-act="saveexp" style="flex:1;justify-content:center">Salvar</button>${E.id?(E.confirmDelete?'<button class="btn danger" data-act="expdelyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="expdelask">Excluir</button>'):''}</div></div></div>`;
+}
+const closeAll=()=>{F=null;E=null;$('#modal').innerHTML=''};
+
+/* ---------- eventos ---------- */
+document.addEventListener('submit',async ev=>{
+  if(ev.target.id!=='loginf')return;ev.preventDefault();
+  try{me=await Data.signIn($('#lg-email').value.trim(),$('#lg-pw').value);msg='';await reload()}catch(e){msg='E-mail ou senha incorretos.';me=false;render()}
+});
+document.addEventListener('click',async ev=>{
+  const t=ev.target;if(t.closest('[data-scrim]')===t){closeAll();return}
+  let el;
+  if(el=t.closest('[data-tab]')){tab=el.dataset.tab;window.scrollTo(0,0);render();return}
+  if(el=t.closest('[data-filter]')){resFilter=el.dataset.filter;render();return}
+  if(el=t.closest('[data-day]')){el.dataset.bk?editForm(el.dataset.bk):newForm('reserva',el.dataset.flat,el.dataset.day);return}
+  if(el=t.closest('[data-bk]')){editForm(el.dataset.bk);return}
+  if(el=t.closest('[data-exp]')){expSheet(S.expenses.find(x=>x.id===el.dataset.exp));return}
+  if(el=t.closest('[data-addrate]')){const se=el.dataset.addrate==='season';await put('rates',{id:uuid(),flat:el.dataset.flat,type:el.dataset.addrate,name:'',from_date:se?'2000-12-15':todayIso(),to_date:se?'2000-02-28':todayIso(),price:null});return}
+  if(el=t.closest('[data-delrate]')){await drop('rates',el.dataset.delrate);return}
+  if(el=t.closest('[data-delpay]')){F.payments.splice(+el.dataset.delpay,1);sheet();return}
+  el=t.closest('[data-act]');if(!el)return;const a=el.dataset.act;
+  if(a==='mprev'){calMonth=monthShift(calMonth,-1);render()}else if(a==='mnext'){calMonth=monthShift(calMonth,1);render()}
+  else if(a==='fprev'){finMonth=monthShift(finMonth,-1);render()}else if(a==='fnext'){finMonth=monthShift(finMonth,1);render()}
+  else if(a==='newres')newForm('reserva');else if(a==='newblock')newForm('bloqueio');
+  else if(a==='closesheet'||a==='closeexp')closeAll();
+  else if(a==='addpay'){F.payments.push({date:todayIso(),amount:''});sheet()}
+  else if(a==='savesheet')saveSheet();
+  else if(a==='delask'){F.confirmDelete=true;sheet()}
+  else if(a==='delyes'){if(await drop('bookings',F.id))closeAll()}
+  else if(a==='newexp')expSheet(null);
+  else if(a==='saveexp'){const amt=numIn($('#e-amount').value);if(amt==null){$('#e-amount').focus();return}
+    if(await put('expenses',{id:E.id||uuid(),date:$('#e-date').value,flat:$('#e-flat').value,cat:$('#e-cat').value,descr:$('#e-desc').value,amount:amt}))closeAll()}
+  else if(a==='expdelask'){const d=$('#e-desc').value;E.descr=d;E.confirmDelete=true;expSheet(E)}
+  else if(a==='expdelyes'){if(await drop('expenses',E.id))closeAll()}
+  else if(a==='logout'){await Data.signOut();me=Data.live?false:me;render()}
+  else if(a==='clearmsg'){msg='';render()}
+  else if(a==='copyquote'||a==='copysite'){const src=a==='copysite'?$('#sitelink'):$('#f-msg'),text=a==='copysite'?src.textContent:src.value;
+    try{await navigator.clipboard.writeText(text);el.textContent='Copiado'}catch(e){if(src.select)src.select();else{const r=document.createRange();r.selectNodeContents(src);const s=getSelection();s.removeAllRanges();s.addRange(r)}el.textContent='Selecionado, copie'}}
+});
+document.addEventListener('input',ev=>{const t=ev.target;if(!F||!t.id||!t.id.startsWith('f-'))return;
+  const map={'f-guest':'guest','f-phone':'phone','f-guests':'guests','f-adjust':'adjust','f-notes':'notes'};if(map[t.id]){F[map[t.id]]=t.value;if(t.id==='f-adjust'||t.id==='f-guest')live_()}});
+document.addEventListener('change',async ev=>{
+  const t=ev.target;
+  if(F&&t.id){if(t.id==='f-flat'){F.flat=t.value;sheet();return}if(t.id==='f-status'){F.status=t.value;live_();return}
+    if(t.id==='f-ci'){F.checkin=t.value;if(F.checkout<=F.checkin)F.checkout=iso(T(F.checkin)+DAY);sheet();return}if(t.id==='f-co'){F.checkout=t.value;live_();return}}
+  if(F&&t.dataset.pay!==undefined){F.payments[+t.dataset.pay][t.dataset.f]=t.value;live_();return}
+  if(t.dataset.flatfield){const fid=t.dataset.flat,cur=S.flats.find(x=>x.id===fid)||{id:fid,name:FLATS[fid].name,loc:FLATS[fid].loc};await put('flats',{...cur,[t.dataset.flatfield]:numIn(t.value)});return}
+  if(t.dataset.rate){const r=S.rates.find(x=>x.id===t.dataset.rate);if(!r)return;const row={...r};let v=t.value;if(t.dataset.f==='price')v=numIn(v);if(v===''&&t.dataset.f!=='name')v=null;row[t.dataset.f]=v;await put('rates',row)}
+});
+
+(async function boot(){
+  me=await Data.user();
+  if(me)await reload();else{me=false;render()}
+})();
+})();
+</script>
+</body></html>

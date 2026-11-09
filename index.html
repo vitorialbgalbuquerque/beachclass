@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Beach Class | Disponibilidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div class="pub">
+  <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px">Flats em Porto de Galinhas e Muro Alto</div></div></div>
+  <h1>Escolha as datas da sua estadia</h1>
+  <div class="muted">Térreo com jardim, até 8 pessoas. Os dias em verde estão livres.</div>
+  <div class="flatpick" id="flats"></div>
+  <div class="card pubcal" style="margin-top:14px">
+    <div class="head"><button class="nv" id="prev" aria-label="Mês anterior">‹</button><b id="title"></b><button class="nv" id="next" aria-label="Próximo mês">›</button></div>
+    <div class="mon" id="mon"></div>
+    <div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 17%,var(--surface))"></i>Livre</span><span><i style="background:var(--sunk)"></i>Ocupado</span><span><i style="background:var(--accent)"></i>Sua escolha</span></div>
+  </div>
+  <p class="muted" style="font-size:13px;margin-top:14px">Toque no dia de entrada e depois no dia de saída. A reserva só vale depois da confirmação pelo WhatsApp. <span id="upd"></span></p>
+  <p id="demo" class="infobox" hidden>Modo demonstração: dados de exemplo, só neste navegador.</p>
+  <p id="err" class="warnbox" hidden>Não foi possível carregar a disponibilidade agora. Chame no WhatsApp para confirmar as datas.</p>
+</div>
+<div class="cta-bar"><div class="in"><div id="pick" style="font-size:14.5px"></div><a class="cta" id="cta" target="_blank" rel="noopener">Chamar no WhatsApp</a><button class="lnk" id="clear" hidden>Limpar datas</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script>
+(async function(){
+const {Data,C,FLATS,MESES,T,iso,DAY,todayIso}=BC;
+const $=s=>document.getElementById(s);
+const today=todayIso();
+let flat='summer',ym=today.slice(0,7),a=null,b=null,busy={summer:new Set(),solare:new Set()};
+const br=s=>s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4);
+const shift=BC.monthShift,maxYm=shift(today.slice(0,7),14);
+if(!Data.live)$('demo').hidden=false;
+try{
+  const av=await Data.availability();
+  Object.keys(av).forEach(f=>av[f].forEach(([ci,co])=>{for(let t=T(ci);t<T(co);t+=DAY)busy[f].add(iso(t))}));
+}catch(e){$('err').hidden=false}
+const free=(x,y)=>{for(let t=T(x);t<T(y);t+=DAY)if(busy[flat].has(iso(t)))return false;return true};
+function pick(d){
+  if(d<today)return;
+  if(!a||(a&&b)){if(busy[flat].has(d))return;a=d;b=null}
+  else if(d===a)a=null;
+  else if(d<a){if(busy[flat].has(d))return;a=d}
+  else if(free(a,d))b=d;
+  else{if(busy[flat].has(d))return;a=d;b=null}
+  draw();
+}
+function draw(){
+  $('flats').innerHTML=Object.keys(FLATS).map(f=>`<button data-f="${f}" aria-pressed="${f===flat}"><b>${FLATS[f].name}</b><span>${FLATS[f].loc}</span></button>`).join('');
+  const [y,m]=ym.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),lead=new Date(Date.UTC(y,m-1,1)).getUTCDay();
+  $('title').textContent=MESES[m-1]+' '+y;
+  $('prev').disabled=ym<=today.slice(0,7);$('next').disabled=ym>=maxYm;
+  let h=['D','S','T','Q','Q','S','S'].map(x=>`<div class="dow">${x}</div>`).join('');
+  for(let i=0;i<lead;i++)h+='<div class="pd out"></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${ym}-${String(d).padStart(2,'0')}`;let c='pd',lab='livre';
+    if(ds<today){c+=' past';lab='passado'}else if(busy[flat].has(ds)){c+=' busy';lab='ocupado'}
+    if(a&&ds===a||b&&ds===b)c=c.replace(' busy','')+' sel';else if(a&&b&&ds>a&&ds<b)c+=' inr';
+    h+=`<button class="${c}" data-d="${ds}" aria-label="${d} ${lab}">${d}</button>`;
+  }
+  $('mon').innerHTML=h;
+  const n=a&&b?Math.round((T(b)-T(a))/DAY):0;let msg;
+  if(a&&b){$('pick').innerHTML=`<b>${FLATS[flat].name}</b>: ${br(a)} a ${br(b)} · ${n} noite${n>1?'s':''}`;msg=`Oi! Quero reservar o Beach Class ${FLATS[flat].name} (${FLATS[flat].loc}) de ${br(a)} a ${br(b)} (${n} noite${n>1?'s':''}). Vi a disponibilidade no site. Podem me passar o valor?`}
+  else if(a){$('pick').textContent=`Entrada em ${br(a)}. Agora toque no dia de saída.`;msg=`Oi! Quero reservar o Beach Class ${FLATS[flat].name} (${FLATS[flat].loc}). Vi a disponibilidade no site. Podem me passar as datas disponíveis?`}
+  else{$('pick').textContent='Escolha a data de entrada.';msg='Oi! Quero reservar um dos flats do Beach Class. Vi a disponibilidade no site. Podem me passar as datas disponíveis?'}
+  $('cta').href='https://wa.me/'+(C.WHATSAPP||'5581986541856')+'?text='+encodeURIComponent(msg);
+  $('clear').hidden=!a;
+}
+document.addEventListener('click',e=>{
+  const f=e.target.closest('[data-f]');if(f){flat=f.dataset.f;a=b=null;draw();return}
+  const d=e.target.closest('[data-d]');if(d){pick(d.dataset.d);return}
+  if(e.target.closest('#prev')&&ym>today.slice(0,7)){ym=shift(ym,-1);draw()}
+  if(e.target.closest('#next')&&ym<maxYm){ym=shift(ym,1);draw()}
+  if(e.target.closest('#clear')){a=b=null;draw()}
+});
+draw();
+})();
+</script>
+</body></html>
