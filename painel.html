@@ -5,19 +5,19 @@
 <title>Painel BC01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="style.css?v=21">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
-<script src="core.js?v=5"></script>
+<script src="core.js?v=6"></script>
 <script>
 (function(){
-const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid,holidayAt,holidaysIn,holidaySuggestions,HTYPE}=BC;
+const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid,holidayAt,holidaysIn,holidaySuggestions,HTYPE,holidaySuggestionsYear,longWeekends}=BC;
 const $=s=>document.querySelector(s);
 const CATS=['Condomínio','Limpeza','Energia','Água','Internet','Manutenção','Enxoval e lavanderia','Reposição','IPTU','Outros'];
 const S={flats:{},rates:[],bookings:[],expenses:[]};
-let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',F=null,E=null,msg='';
+let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',ratesYear=+todayIso().slice(0,4),F=null,E=null,msg='';
 
 const ICON={
  cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
@@ -83,12 +83,28 @@ function loginHtml(){return `<div class="login"><form class="card" id="loginf"><
  <label>E-mail<input id="lg-email" type="email" autocomplete="username" required></label><label>Senha<input id="lg-pw" type="password" autocomplete="current-password" required></label>
  ${msg?`<div class="warnbox">${esc(msg)}</div>`:''}<button class="btn primary" style="justify-content:center">Entrar</button></form></div>`}
 
+/* ---------- feriadões ---------- */
+const lwName=l=>l.names.some(n=>/Carnaval/.test(n))?'Carnaval':(l.names.filter(n=>!/Cinzas/.test(n)).join(' + '));
+const lwPriced=(fid,l)=>{for(let t=T(l.from);t<=T(l.to);t+=DAY){const d=iso(t);if(!S.rates.some(r=>r.flat===fid&&r.type==='especial'&&r.price!=null&&r.from_date&&r.from_date<=d&&d<=r.to_date))return false}return true};
+const lwHasRow=(fid,l)=>S.rates.some(r=>r.flat===fid&&r.type==='especial'&&r.from_date&&r.from_date<=l.to&&l.from<=r.to_date);
+const lwTitle=l=>`${dm(l.from)} a ${dm(l.to)} · ${l.days} dias`;
+function lwCard(){
+  const td=todayIso(),lws=longWeekends(td,iso(T(td)+200*DAY)).slice(0,4);
+  if(!lws.length)return '';
+  return `<div class="card c12 lw"><div class="card-h"><h2>Feriadões chegando</h2><span class="muted" style="font-size:13px">Próximos 200 dias</span></div>${lws.map(l=>{
+    const occ=FIDS.map(fid=>{const m=occMap(fid);let n=0;for(let t=T(l.from);t<=T(l.to);t+=DAY)if(m[iso(t)])n++;return n});
+    return `<div class="r"><div><div class="d1">${esc(lwName(l))}</div><div class="d2">${lwTitle(l)}${l.emenda?' · com emenda':''}${l.fac?' · ponto facultativo':''}</div></div>
+    <div class="st">${FIDS.map((fid,i)=>`<span class="tag ${lwPriced(fid,l)?'t-ok':'t-bad'}">${FLATS[fid].name.split(' ')[0]}: ${lwPriced(fid,l)?'preço definido':'sem preço'} · ${occ[i]}/${l.days} ocupadas</span>`).join('')}</div>
+    <button class="btn small" data-act="gorates" data-year="${l.from.slice(0,4)}">Diárias</button></div>`}).join('')}</div>`;
+}
+
 /* ---------- calendário ---------- */
 function vCal(){
   const [y,m]=calMonth.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),lead=new Date(Date.UTC(y,m-1,1)).getUTCDay(),td=todayIso();
   const st=monthStats(calMonth),nxt=S.bookings.filter(b=>b.kind==='reserva'&&b.status!=='cancelada'&&b.checkin>=td).sort((a,b)=>a.checkin.localeCompare(b.checkin))[0];
   const open=S.bookings.filter(b=>b.kind==='reserva'&&b.status==='confirmada'&&b.total-paid(b)>0.005).reduce((s,b)=>s+b.total-paid(b),0);
   let h=`<div class="grid">${kpi('Ocupação do mês',st.occPct.toFixed(0)+'%',`${st.occ} noites ocupadas${st.blk?`, ${st.blk} bloqueadas`:''}`,'pct','#1B8F94')}${kpi('Próxima entrada',nxt?dm(nxt.checkin):'—',nxt?`${esc(nxt.guest||'Sem nome')} · ${FLATS[nxt.flat].name}`:'Nenhuma reserva futura','in','#C79A3B')}${kpi('A receber',brl(open),'Saldo das reservas confirmadas','cash','#E5484D')}</div><div class="grid">`;
+  h+=lwCard();
   FIDS.forEach(fid=>{
     const occ=occMap(fid);let c=['D','S','T','Q','Q','S','S'].map(x=>`<div class="dow">${x}</div>`).join('');
     for(let i=0;i<lead;i++)c+='<div class="d out"></div>';
@@ -126,18 +142,23 @@ function vRes(){
 
 /* ---------- diárias ---------- */
 function vRates(){
-  let h='<div class="infobox"><b>Como o preço de cada noite é escolhido:</b> 1) Feriado ou data especial, que vale para todas as noites do período; 2) Temporada; 3) Diária base. Dentro da temporada e da diária base há dois preços: <b>semana</b> (noites de domingo a quinta) e <b>fim de semana</b> (noites de sexta e sábado). Se você deixar o fim de semana em branco, vale o mesmo preço da semana. A limpeza é um valor fixo por hospedagem, somado uma vez ao total.</div><div class="grid">';
+  const y0=+todayIso().slice(0,4),YEARS=[y0,y0+1,y0+2];if(!YEARS.includes(ratesYear))ratesYear=y0;
+  const yStr=String(ratesYear),yStart=ratesYear===y0?todayIso():yStr+'-01-01',cnt=y=>S.rates.filter(r=>r.type==='especial'&&(r.from_date||'').slice(0,4)===String(y)).length;
+  const lws=longWeekends(yStart,yStr+'-12-31').filter(l=>l.from.slice(0,4)===yStr||l.to.slice(0,4)===yStr).filter(l=>FIDS.some(f=>!lwPriced(f,l)));
+  let h=`<div class="infobox"><b>Como o preço de cada noite é escolhido:</b> 1) Feriado ou data especial, que vale para todas as noites do período; 2) Temporada; 3) Diária base. Dentro da temporada e da diária base há dois preços: <b>semana</b> (noites de domingo a quinta) e <b>fim de semana</b> (noites de sexta e sábado). Se você deixar o fim de semana em branco, vale o mesmo preço da semana. A limpeza é um valor fixo por hospedagem, somado uma vez ao total.</div>
+  <div class="ypills" style="margin:14px 0" role="tablist">${YEARS.map(y=>`<button data-ypill="${y}" aria-pressed="${y===ratesYear}">${y}<small>${cnt(y)?cnt(y)+(cnt(y)>1?' datas':' data'):''}</small></button>`).join('')}</div>`;
+  if(lws.length)h+=`<div class="warnbox" style="margin-bottom:14px"><b>Atenção: feriadões de ${ratesYear} sem preço definido</b><div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">${lws.map(l=>`<div class="row sb" style="gap:10px;flex-wrap:wrap"><span><b>${esc(lwName(l))}</b> · ${lwTitle(l)}${l.emenda?' · com emenda':''}${l.fac?' · ponto facultativo':''}<br><span class="muted" style="font-size:12.5px">Sem preço: ${FIDS.filter(f=>!lwPriced(f,l)).map(f=>FLATS[f].name.split(' ')[0]).join(' e ')}</span></span>${FIDS.some(f=>!lwHasRow(f,l))?`<button class="btn small" data-addlw="${l.from}|${l.to}|${esc(lwName(l))}">Criar linha de preço</button>`:'<span class="muted" style="font-size:12.5px">Linha criada: falta digitar o preço</span>'}</div>`).join('')}</div></div>`;
+  h+='<div class="grid">';
   FIDS.forEach(fid=>{
-    const c=flatCfg(fid),rs=S.rates.filter(r=>r.flat===fid).sort((a,b)=>a.type===b.type?(a.from_date||'').localeCompare(b.from_date||''):a.type==='especial'?-1:1);
+    const c=flatCfg(fid),seas=S.rates.filter(r=>r.flat===fid&&r.type==='season').sort((a,b)=>(a.from_date||'').slice(5).localeCompare((b.from_date||'').slice(5))),esp=S.rates.filter(r=>r.flat===fid&&r.type==='especial'&&(r.from_date||'').slice(0,4)===yStr).sort((a,b)=>(a.from_date||'').localeCompare(b.from_date||''));
+    const row=r=>{const se=r.type==='season';return `<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>${se?'Semana (dom a qui)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (sex e sáb)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`};
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div>
     <div class="h3" style="margin:14px 0 8px">Diária base (por noite) e limpeza</div>
     <div class="basegrid"><label>Semana (dom a qui)<input inputmode="decimal" data-flatfield="base" data-flat="${fid}" value="${c.base??''}" placeholder="ex.: 450"></label><label>Fim de semana (sex e sáb)<input inputmode="decimal" data-flatfield="base_we" data-flat="${fid}" value="${c.base_we??''}" placeholder="igual à semana"></label><label>Limpeza por hospedagem<input inputmode="decimal" data-flatfield="cleaning" data-flat="${fid}" value="${c.cleaning??''}" placeholder="ex.: 150"></label></div>
-    <div class="row sb" style="margin-top:18px"><div class="h3" style="margin:0">Temporadas, feriados e datas especiais</div><div class="row"><button class="btn small" data-addrate="season" data-flat="${fid}">+ Temporada</button><button class="btn small" data-addrate="especial" data-flat="${fid}">+ Feriado / data especial</button></div></div>
-    <label style="margin-top:10px">Adicionar feriado pronto (nacional e de Pernambuco)<select data-addhol data-flat="${fid}"><option value="">Escolha um feriado...</option>${holidaySuggestions(todayIso()).map(([n,a,b])=>`<option value="${a}|${b}|${esc(n)}">${dm(a)}${b!==a?' a '+dm(b):''} · ${esc(n)}</option>`).join('')}</select></label><div class="ratelist">`;
-    if(!rs.length)h+='<div class="empty">Nenhuma temporada ainda. A diária base vale para todas as datas.</div>';
-    rs.forEach(r=>{const se=r.type==='season';
-      h+=`<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>${se?'Semana (dom a qui)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (sex e sáb)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`});
-    h+='</div></div>';
+    <div class="sec-h"><div class="h3" style="margin:0">Temporadas (valem todos os anos)</div><button class="btn small" data-addrate="season" data-flat="${fid}">+ Temporada</button></div><div class="ratelist">${seas.length?seas.map(row).join(''):'<div class="empty">Nenhuma temporada. A diária base vale para todas as datas.</div>'}</div>
+    <div class="sec-h"><div class="h3" style="margin:0">Feriados e datas especiais de ${ratesYear}</div><button class="btn small" data-addrate="especial" data-flat="${fid}">+ Data especial</button></div>
+    <label style="margin-top:10px">Adicionar feriado pronto de ${ratesYear}<select data-addhol data-flat="${fid}"><option value="">Escolha um feriado...</option>${holidaySuggestionsYear(ratesYear).filter(x=>x[2]>=yStart).map(([n,a,b])=>`<option value="${a}|${b}|${esc(n)}">${dm(a)}${b!==a?' a '+dm(b)+(b.slice(0,4)!==a.slice(0,4)?'/'+b.slice(2,4):''):''} · ${esc(n)}</option>`).join('')}</select></label>
+    <div class="ratelist">${esp.length?esp.map(row).join(''):`<div class="empty">Nenhuma data especial em ${ratesYear}.</div>`}</div></div>`;
   });
   return ['Diárias','','',h+'</div>'];
 }
@@ -241,9 +262,11 @@ document.addEventListener('click',async ev=>{
   if(el=t.closest('[data-day]')){el.dataset.bk?editForm(el.dataset.bk):newForm('reserva',el.dataset.flat,el.dataset.day);return}
   if(el=t.closest('[data-bk]')){editForm(el.dataset.bk);return}
   if(el=t.closest('[data-exp]')){expSheet(S.expenses.find(x=>x.id===el.dataset.exp));return}
-  if(el=t.closest('[data-addrate]')){const se=el.dataset.addrate==='season';await put('rates',{id:uuid(),flat:el.dataset.flat,type:el.dataset.addrate,name:'',from_date:se?'2000-12-15':todayIso(),to_date:se?'2000-02-28':todayIso(),price:null,price_we:null});return}
+  if(el=t.closest('[data-addrate]')){const se=el.dataset.addrate==='season';await put('rates',{id:uuid(),flat:el.dataset.flat,type:el.dataset.addrate,name:'',from_date:se?'2000-12-15':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),to_date:se?'2000-02-28':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),price:null,price_we:null});return}
   if(el=t.closest('[data-delrate]')){await drop('rates',el.dataset.delrate);return}
   if(el=t.closest('[data-delpay]')){F.payments.splice(+el.dataset.delpay,1);sheet();return}
+  if(el=t.closest('[data-ypill]')){ratesYear=+el.dataset.ypill;render();return}
+  if(el=t.closest('[data-addlw]')){const [fa,fb,fn]=el.dataset.addlw.split('|'),l={from:fa,to:fb};for(const fid of FIDS)if(!lwHasRow(fid,l))await put('rates',{id:uuid(),flat:fid,type:'especial',name:fn,from_date:fa,to_date:fb,price:null,price_we:null});return}
   el=t.closest('[data-act]');if(!el)return;const a=el.dataset.act;
   if(a==='mprev'){calMonth=monthShift(calMonth,-1);render()}else if(a==='mnext'){calMonth=monthShift(calMonth,1);render()}
   else if(a==='fprev'){finMonth=monthShift(finMonth,-1);render()}else if(a==='fnext'){finMonth=monthShift(finMonth,1);render()}
@@ -259,6 +282,7 @@ document.addEventListener('click',async ev=>{
   else if(a==='expdelask'){const d=$('#e-desc').value;E.descr=d;E.confirmDelete=true;expSheet(E)}
   else if(a==='expdelyes'){if(await drop('expenses',E.id))closeAll()}
   else if(a==='logout'){await Data.signOut();me=Data.live?false:me;render()}
+  else if(a==='gorates'){ratesYear=+(el.dataset.year||ratesYear);tab='rates';render()}
   else if(a==='clearmsg'){msg='';render()}
   else if(a==='copyquote'||a==='copysite'){const src=a==='copysite'?$('#sitelink'):$('#f-msg'),text=a==='copysite'?src.textContent:src.value;
     try{await navigator.clipboard.writeText(text);el.textContent='Copiado'}catch(e){if(src.select)src.select();else{const r=document.createRange();r.selectNodeContents(src);const s=getSelection();s.removeAllRanges();s.addRange(r)}el.textContent='Selecionado, copie'}}

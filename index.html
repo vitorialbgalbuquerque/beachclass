@@ -4,7 +4,7 @@
 <title>Beach Class | Disponibilidade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="style.css?v=21">
 </head><body>
 <div class="pub">
   <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
@@ -28,7 +28,7 @@
 <div class="cta-bar"><div class="in"><div id="pick" style="font-size:14.5px"></div><a class="cta" id="cta" target="_blank" rel="noopener">Chamar no WhatsApp</a><button class="lnk" id="clear" hidden>Limpar datas</button></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
-<script src="core.js?v=5"></script>
+<script src="core.js?v=6"></script>
 <script>
 (async function(){
 const {Data,C,FLATS,MESES,T,iso,DAY,todayIso,holidayAt,HTYPE}=BC;
@@ -104,7 +104,7 @@ function about(){
     <button class="ar l" data-nav="-1" aria-label="Foto anterior">‹</button><button class="ar r" data-nav="1" aria-label="Próxima foto">›</button><span class="ct" id="ct">1 / ${f.length}</span></div>
     <div class="th" id="th">${f.map(([u,c,t],k)=>`<button data-go="${k}" aria-label="${t}" ${k?'':'class="on"'}><img src="${u}" alt="" loading="lazy"></button>`).join('')}</div>`;
   }
-  h+=`<span class="tag">${i.tag}</span><h2 class="nm">Beach Class ${FLATS[flat].name.split(' ')[0]}</h2><div class="where">${ic('pin')}<span>${i.loc}</span></div><p class="ds">${i.desc}</p>`;
+  h+=`<span class="ftag">${i.tag}</span><h2 class="nm">Beach Class ${FLATS[flat].name.split(' ')[0]}</h2><div class="where">${ic('pin')}<span>${i.loc}</span></div><p class="ds">${i.desc}</p>`;
   h+=`<h3>Principais comodidades</h3><ul class="am">${lis(i.flat)}</ul>`;
   if(i.cond.length)h+=`<h3>No condomínio</h3><ul class="am">${lis(i.cond)}</ul>`;
   if(i.cafe)h+=`<h3>Café da manhã no restaurante Umbu Cajá</h3><div class="cafe">${i.cafe.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('')}</div><p class="cn">Buffet livre. Valores do restaurante Umbu Cajá, pagos direto a ele.</p>`;

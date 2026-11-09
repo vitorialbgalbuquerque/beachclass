@@ -101,5 +101,23 @@ function holidaySuggestions(from){
   const lim=iso(T(from)+548*DAY);
   return out.filter(x=>x[2]>=from&&x[1]<=lim).filter((x,i,a)=>a.findIndex(z=>z[0]===x[0]&&z[1]===x[1])===i&&!/^Segunda de Carnaval|^Terça de Carnaval|^Quarta de Cinzas/.test(x[0])).sort((a,b)=>a[1].localeCompare(b[1]));
 }
-window.BC={holidayAt,holidaysIn,holidaySuggestions,HTYPE,C,Data,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid};
+
+
+/* Sugestões de um ano específico */
+function holidaySuggestionsYear(yy){
+  const E=easterMs(yy),out=[];
+  Object.entries(holidaysOf(yy)).forEach(([d,h])=>{if(h.n==='Sexta-feira Santa')return;if(h.t!=='fac'||h.n.startsWith('Corpus')||h.n==='São João')out.push([h.n+(h.t==='fac'?' (ponto facultativo)':''),d,d])});
+  out.push(['Carnaval '+yy,iso(E-50*DAY),iso(E-47*DAY)]);out.push(['Semana Santa '+yy,iso(E-2*DAY),iso(E)]);out.push(['Réveillon '+yy,yy+'-12-29',(yy+1)+'-01-02']);
+  return out.sort((a,b)=>a[1].localeCompare(b[1]));
+}
+/* Feriadões: sequências de 3+ dias seguidos (sáb, dom, feriado) com ao menos um feriado; "emenda" quando o feriado cai na terça ou quinta */
+function longWeekends(from,to){
+  const out=[],off=d=>{const dow=new Date(T(d)).getUTCDay();return dow===0||dow===6||!!holidayAt(d)};
+  const bridge=d=>{const dow=new Date(T(d)).getUTCDay(),n=iso(T(d)+DAY),p=iso(T(d)-DAY);return (dow===1&&!!holidayAt(n)&&new Date(T(n)).getUTCDay()===2)||(dow===5&&!!holidayAt(p)&&new Date(T(p)).getUTCDay()===4)};
+  let run=[];const flush=()=>{if(run.length>=3){const hs=run.filter(x=>holidayAt(x.d));if(hs.length){out.push({from:run[0].d,to:run[run.length-1].d,days:run.length,names:[...new Set(hs.map(x=>holidayAt(x.d).n))],emenda:run.some(x=>x.b),fac:hs.every(x=>holidayAt(x.d).t==='fac')})}}run=[]};
+  for(let t=T(from)-4*DAY;t<=T(to)+4*DAY;t+=DAY){const d=iso(t),b=!off(d)&&bridge(d);if(off(d)||b)run.push({d,b});else flush()}
+  flush();
+  return out.filter(x=>x.to>=from&&x.from<=to);
+}
+window.BC={holidaySuggestionsYear,longWeekends,holidayAt,holidaysIn,holidaySuggestions,HTYPE,C,Data,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid};
 })();
