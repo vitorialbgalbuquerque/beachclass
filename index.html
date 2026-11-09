@@ -7,10 +7,11 @@
 <link rel="stylesheet" href="style.css">
 </head><body>
 <div class="pub">
-  <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px">Flats em Porto de Galinhas e Muro Alto</div></div></div>
+  <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
   <h1>Escolha as datas da sua estadia</h1>
   <div class="muted">Térreo com jardim, até 8 pessoas. Os dias em verde estão livres.</div>
   <div class="flatpick" id="flats"></div>
+  <section class="about" id="about"></section>
   <div class="card pubcal" style="margin-top:14px">
     <div class="head"><button class="nv" id="prev" aria-label="Mês anterior">‹</button><b id="title"></b><button class="nv" id="next" aria-label="Próximo mês">›</button></div>
     <div class="mon" id="mon"></div>
@@ -29,6 +30,8 @@
 const {Data,C,FLATS,MESES,T,iso,DAY,todayIso}=BC;
 const $=s=>document.getElementById(s);
 const today=todayIso();
+const ATIVOS=Object.keys(FLATS).filter(f=>f!=='solare'||C.SOLARE_ATIVO);
+if(C.SOLARE_ATIVO)$('sub').textContent='Flats em Porto de Galinhas e Muro Alto';
 let flat='summer',ym=today.slice(0,7),a=null,b=null,busy={summer:new Set(),solare:new Set()};
 const br=s=>s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4);
 const shift=BC.monthShift,maxYm=shift(today.slice(0,7),14);
@@ -47,8 +50,28 @@ function pick(d){
   else{if(busy[flat].has(d))return;a=d;b=null}
   draw();
 }
+const INFO={
+ summer:{fotos:[['01','Visão do prédio e da piscina'],['02','Jardim com área de estar'],['03','Varanda com mesa para as refeições'],['04','Cozinha externa com pia e bancada'],['05','Sala climatizada com sofá-cama'],['06','Cozinha equipada'],['07','Quarto 1'],['08','Quarto 2']].map(([n,t])=>['fotos/summer/'+n+'.jpg',t]),
+  chips:['Térreo com jardim','2 quartos','Até 8 pessoas','Sala climatizada','Sofá-cama'],
+  desc:'Flat térreo com jardim e área de estar, pensado para o descanso do grupo todo. Varanda com mesa para as refeições, cozinha externa com pia e bancada, sala climatizada com sofá-cama e TV.',
+  itens:['Ar-condicionado','TV','Cozinha equipada','Geladeira, fogão e forno','Micro-ondas e airfryer','Cafeteira'],
+  cond:['Piscinas para adultos e crianças','Parque aquático','Spa com hidromassagem','Academia','Quadras esportivas','Brinquedoteca e lavanderia'],
+  nota:'A poucos minutos a pé da Praia do Cupe.'},
+ solare:{fotos:[],chips:['Térreo com jardim','Até 8 pessoas','Muro Alto'],
+  desc:'Flat térreo com jardim em Muro Alto, para até 8 pessoas. Fotos em breve. Chame no WhatsApp para ver imagens e tirar dúvidas.',itens:[],cond:[],nota:''}
+};
+function about(){
+  const i=INFO[flat];let h='';
+  if(i.fotos.length)h+=`<div class="gal" tabindex="0" aria-label="Fotos do ${FLATS[flat].name}">${i.fotos.map(([u,t],k)=>`<figure><img src="${u}" alt="${t}" ${k?'loading="lazy"':''}><figcaption>${t}</figcaption></figure>`).join('')}</div>`;
+  h+=`<h2>${FLATS[flat].name} · ${FLATS[flat].loc}</h2><p>${i.desc}</p><div class="chips">${i.chips.map(c=>`<span>${c}</span>`).join('')}</div>`;
+  if(i.itens.length)h+=`<h2>No flat</h2><ul class="amen">${i.itens.map(c=>`<li>${c}</li>`).join('')}</ul>`;
+  if(i.cond.length)h+=`<h2>No condomínio</h2><ul class="amen">${i.cond.map(c=>`<li>${c}</li>`).join('')}</ul>${i.nota?`<p style="margin-top:10px">${i.nota}</p>`:''}`;
+  document.getElementById('about').innerHTML=h;
+}
 function draw(){
-  $('flats').innerHTML=Object.keys(FLATS).map(f=>`<button data-f="${f}" aria-pressed="${f===flat}"><b>${FLATS[f].name}</b><span>${FLATS[f].loc}</span></button>`).join('');
+  about();
+  $('flats').hidden=ATIVOS.length<2;
+  $('flats').innerHTML=ATIVOS.map(f=>`<button data-f="${f}" aria-pressed="${f===flat}"><b>${FLATS[f].name}</b><span>${FLATS[f].loc}</span></button>`).join('');
   const [y,m]=ym.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),lead=new Date(Date.UTC(y,m-1,1)).getUTCDay();
   $('title').textContent=MESES[m-1]+' '+y;
   $('prev').disabled=ym<=today.slice(0,7);$('next').disabled=ym>=maxYm;
