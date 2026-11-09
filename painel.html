@@ -5,7 +5,7 @@
 <title>Painel BC01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -99,7 +99,8 @@ function vCal(){
     }
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div><div class="mon">${c}</div></div>`;
   });
-  h+=`</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Pré-reserva</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span><i class="hdot" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Feriado (nacional, Data Magna de PE) · <i class="hdot fac" style="display:inline-block;vertical-align:1px;margin:0 5px 0 8px"></i>Ponto facultativo</span><span>Toque num dia livre para reservar</span></div>`;
+  const hm=holidaysIn(calMonth+'-01',calMonth+'-'+String(days).padStart(2,'0'));
+  h+=`</div><div class="hlist">${hm.length?hm.map(x=>`<span><i class="hdot ${x.t==='fac'?'fac':''}"></i><b>${x.d.slice(8,10)}/${x.d.slice(5,7)}</b> ${esc(x.n)} (${HTYPE[x.t]})</span>`).join(''):'<span class="muted">Sem feriados neste mês.</span>'}</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Pré-reserva</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span><i class="hdot" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Feriado (nacional, Data Magna de PE) · <i class="hdot fac" style="display:inline-block;vertical-align:1px;margin:0 5px 0 8px"></i>Ponto facultativo</span><span>Toque num dia livre para reservar</span></div>`;
   return ['Calendário',monthPill(calMonth,'mprev','mnext'),'<button class="btn" data-act="newblock">Bloquear datas</button><button class="btn primary" data-act="newres">Nova reserva</button>',h];
 }
 

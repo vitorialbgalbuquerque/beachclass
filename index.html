@@ -4,7 +4,7 @@
 <title>Beach Class | Disponibilidade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head><body>
 <div class="pub">
   <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
@@ -18,6 +18,7 @@
   <div class="card pubcal" style="margin-top:14px">
     <div class="head"><button class="nv" id="prev" aria-label="Mês anterior">‹</button><b id="title"></b><button class="nv" id="next" aria-label="Próximo mês">›</button></div>
     <div class="mon" id="mon"></div>
+    <div class="hlist" id="hlist"></div>
     <div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 17%,var(--surface))"></i>Livre</span><span><i style="background:var(--sunk)"></i>Ocupado</span><span><i style="background:var(--accent)"></i>Sua escolha</span></div>
   </div>
   <p class="muted" style="font-size:13px;margin-top:14px">Toque no dia de entrada e depois no dia de saída. A reserva só vale depois da confirmação pelo WhatsApp. <span id="upd"></span></p>
@@ -30,7 +31,7 @@
 <script src="core.js?v=4"></script>
 <script>
 (async function(){
-const {Data,C,FLATS,MESES,T,iso,DAY,todayIso}=BC;
+const {Data,C,FLATS,MESES,T,iso,DAY,todayIso,holidayAt,HTYPE}=BC;
 const $=s=>document.getElementById(s);
 const today=todayIso();
 const ATIVOS=Object.keys(FLATS).filter(f=>f!=='solare'||C.SOLARE_ATIVO);
@@ -128,15 +129,18 @@ function draw(){
   const [y,m]=ym.split('-').map(Number),days=new Date(Date.UTC(y,m,0)).getUTCDate(),lead=new Date(Date.UTC(y,m-1,1)).getUTCDay();
   $('title').textContent=MESES[m-1]+' '+y;
   $('prev').disabled=ym<=today.slice(0,7);$('next').disabled=ym>=maxYm;
+  const hl=[];
   let h=['D','S','T','Q','Q','S','S'].map(x=>`<div class="dow">${x}</div>`).join('');
   for(let i=0;i<lead;i++)h+='<div class="pd out"></div>';
   for(let d=1;d<=days;d++){
     const ds=`${ym}-${String(d).padStart(2,'0')}`;let c='pd',lab='livre';
     if(ds<today){c+=' past';lab='passado'}else if(busy[flat].has(ds)){c+=' busy';lab='ocupado'}
     if(a&&ds===a||b&&ds===b)c=c.replace(' busy','')+' sel';else if(a&&b&&ds>a&&ds<b)c+=' inr';
-    h+=`<button class="${c}" data-d="${ds}" aria-label="${d} ${lab}">${d}</button>`;
+    const hd=holidayAt(ds);if(hd){hl.push([d,hd]);c+=' hol'}
+    h+=`<button class="${c}" data-d="${ds}" aria-label="${d} ${lab}${hd?', '+hd.n:''}" ${hd?`title="${hd.n}"`:''}>${d}${hd?`<i class="hdot ${hd.t==='fac'?'fac':''}"></i>`:''}</button>`;
   }
   $('mon').innerHTML=h;
+  $('hlist').innerHTML=hl.length?hl.map(([d,x])=>`<span><i class="hdot ${x.t==='fac'?'fac':''}"></i><b>${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}</b> ${x.n}${x.t==='fac'?' (ponto facultativo)':x.t==='est'?' (feriado estadual)':''}</span>`).join(''):'<span class="muted">Sem feriados neste mês.</span>';
   const n=a&&b?Math.round((T(b)-T(a))/DAY):0;let msg;
   if(a&&b){$('pick').innerHTML=`<b>${FLATS[flat].name}</b>: ${br(a)} a ${br(b)} · ${n} noite${n>1?'s':''}`;msg=`Oi! Quero reservar o Beach Class ${FLATS[flat].name} (${FLATS[flat].loc}) de ${br(a)} a ${br(b)} (${n} noite${n>1?'s':''}). Vi a disponibilidade no site. Podem me passar o valor?`}
   else if(a){$('pick').textContent=`Entrada em ${br(a)}. Agora toque no dia de saída.`;msg=`Oi! Quero reservar o Beach Class ${FLATS[flat].name} (${FLATS[flat].loc}). Vi a disponibilidade no site. Podem me passar as datas disponíveis?`}
