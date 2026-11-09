@@ -56,3 +56,7 @@ language sql security definer set search_path = public as $$
 $$;
 revoke all on function public.availability() from public;
 grant execute on function public.availability() to anon, authenticated;
+
+-- Preço de fim de semana (noites de sexta e sábado). Vazio = igual ao da semana.
+alter table flats add column if not exists base_we numeric;
+alter table rates add column if not exists price_we numeric;

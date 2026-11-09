@@ -26,8 +26,8 @@ const KEY='bc01-demo-v1';
 function demoSeed(){
   const t=todayIso(),p=n=>iso(T(t)+n*DAY);
   return {
-   flats:[{id:'summer',base:450,cleaning:150},{id:'solare',base:420,cleaning:140}],
-   rates:[{id:uuid(),flat:'summer',type:'season',name:'Alta temporada',from_date:'2000-12-15',to_date:'2000-02-28',price:650},
+   flats:[{id:'summer',base:450,base_we:550,cleaning:150},{id:'solare',base:420,base_we:520,cleaning:140}],
+   rates:[{id:uuid(),flat:'summer',type:'season',name:'Alta temporada',from_date:'2000-12-15',to_date:'2000-02-28',price:650,price_we:800},
           {id:uuid(),flat:'solare',type:'season',name:'Alta temporada',from_date:'2000-12-15',to_date:'2000-02-28',price:600},
           {id:uuid(),flat:'summer',type:'especial',name:'Réveillon',from_date:'2026-12-29',to_date:'2027-01-02',price:900}],
    bookings:[

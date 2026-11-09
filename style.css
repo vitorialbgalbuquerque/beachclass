@@ -327,3 +327,10 @@ tr:last-child td{border-bottom:0}
 .cafe div+div{border-top:1px solid var(--line)}
 .cafe b{color:var(--accent);text-align:right;flex:none;max-width:48%}
 .cn{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+
+.ratelist>div.se{grid-template-columns:1.4fr 1fr 1fr 1fr 1fr auto}
+@media (max-width:640px){.ratelist>div.se{grid-template-columns:1fr 1fr}}
+.ratelist>div,.ratelist>div.se{grid-template-columns:1fr 1fr;gap:10px}
+.ratelist>div>:first-child{grid-column:1/-1}
+.ratelist>div>button{grid-column:1/-1;justify-self:end}
+.ratelist>div.se>label:nth-child(4),.ratelist>div.se>label:nth-child(5){grid-column:auto}
