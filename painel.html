@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=29">
+<link rel="stylesheet" href="style.css?v=30">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -21,7 +21,7 @@ const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetwee
 const $=s=>document.querySelector(s);
 const CATS=['Condomínio','Limpeza','Energia','Água','Internet','Manutenção','Enxoval e lavanderia','Reposição','IPTU','Outros'];
 const S={flats:{},rates:[],bookings:[],expenses:[]};
-let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',ratesYear=+todayIso().slice(0,4),ratesFlat='',F=null,E=null,msg='';
+let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',ratesYear=+todayIso().slice(0,4),ratesFlat='',msgBk='',msgKey='conf',mTxt=null,F=null,E=null,msg='';
 
 const ICON={
  cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
@@ -32,9 +32,10 @@ const ICON={
  pct:'<svg viewBox="0 0 24 24"><path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg>',
  in:'<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>',
  cash:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>',
+ msg:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',
  up:'<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
  down:'<svg viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8M15 17h6v-6"/></svg>'};
-const TABS=[['cal','Calendário'],['res','Reservas'],['rates','Diárias'],['fin','Finanças'],['site','Site dos hóspedes']];
+const TABS=[['cal','Calendário'],['res','Reservas'],['rates','Diárias'],['fin','Finanças'],['msg','Mensagens'],['site','Site dos hóspedes']];
 
 /* ---------- regras de preço ---------- */
 const flatCfg=id=>{const f=S.flats.find?S.flats.find(x=>x.id===id):null;return {base:f?.base??null,base_we:f?.base_we??null,cleaning:f?.cleaning??null}};
@@ -79,7 +80,7 @@ function render(){
   const app=$('#app');
   if(me===false){app.innerHTML=loginHtml();return}
   if(!me){app.innerHTML='';return}
-  const v={cal:vCal,res:vRes,rates:vRates,fin:vFin,site:vSite}[tab]();
+  const v={cal:vCal,res:vRes,rates:vRates,fin:vFin,msg:vMsg,site:vSite}[tab]();
   app.innerHTML=shell(...v);
   if(F)sheet(true);
 }
@@ -210,6 +211,57 @@ function vFin(){
 }
 
 /* ---------- site ---------- */
+/* ---------- mensagens prontas ---------- */
+const MINFO=[['assin','Assinatura','Beach Class'],['end','Endereço do flat',''],['hin','Horário de entrada (check-in)',''],['hout','Horário de saída (check-out)',''],['acesso','Como entrar no flat (chave, portaria, código)',''],['wifi','Wi-Fi (nome e senha)',''],['pix','Chave Pix',''],['aval','Link para avaliação (Google, opcional)','']];
+const MKINDS=[['conf','Confirmação da reserva'],['pag','Pagamento e saldo'],['antes','Antes da chegada'],['boas','Boas-vindas'],['saida','Dia da saída'],['obg','Agradecimento']];
+const minfoLoad=()=>{let o={};try{o=JSON.parse(localStorage.getItem('bc01_msginfo')||'{}')}catch(e){}MINFO.forEach(([k,,d])=>{if(o[k]==null)o[k]=d});return o};
+const minfoSave=o=>{try{localStorage.setItem('bc01_msginfo',JSON.stringify(o))}catch(e){}};
+const wdn=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const dlong=d=>`${dmy(d)} (${wdn[new Date(T(d)).getUTCDay()]})`;
+function msgBooks(){const td=todayIso(),lim=iso(T(td)-30*DAY);return S.bookings.filter(b=>b.kind==='reserva'&&live(b)&&b.checkout>=lim).sort((a,b)=>{const ua=a.checkout>=td,ub=b.checkout>=td;return ua!==ub?(ua?-1:1):(ua?a.checkin.localeCompare(b.checkin):b.checkin.localeCompare(a.checkin))})}
+function msgBuild(b,kind,I){
+  const miss=[],f=(k,l)=>{const v=(I[k]||'').trim();if(!v){miss.push(l);return '['+l+']'}return v};
+  const nome=(b.guest||'').trim().split(/\s+/)[0]||'tudo bem',fl=FLATS[b.flat].name,n=nightsBetween(b.checkin,b.checkout),sal=b.total-paid(b),pg=paid(b);
+  const per=`${dlong(b.checkin)} a ${dlong(b.checkout)}`,ass='\n\n'+((I.assin||'').trim()||'Beach Class');
+  let t='';
+  if(kind==='conf'){
+    t=`Olá, ${nome}! Sua reserva no ${fl} está confirmada. 🏖️\n\n📅 Entrada: ${dlong(b.checkin)}\n📅 Saída: ${dlong(b.checkout)} · ${n} noite${n>1?'s':''}\n${b.guests?`👥 ${b.guests} pessoas\n`:''}💰 Valor total: ${brl(b.total)}\n`;
+    t+=sal>0.005?`${pg>0.005?`Já recebemos ${brl(pg)}. `:''}Falta ${brl(sal)}.\nChave Pix: ${f('pix','chave Pix')}\n`:'Pagamento quitado.\n';
+    t+='\nQualquer dúvida é só chamar por aqui. Vamos adorar receber vocês!'+ass}
+  else if(kind==='pag'){
+    t=sal>0.005?`Olá, ${nome}! Passando para lembrar do saldo da sua reserva no ${fl}, de ${per}.\n\n💰 Valor total: ${brl(b.total)}\n${pg>0.005?`✅ Já pago: ${brl(pg)}\n`:''}➡️ Falta pagar: ${brl(sal)}\n\nChave Pix: ${f('pix','chave Pix')}\nDepois do pagamento, é só me enviar o comprovante por aqui. Obrigada!`+ass
+      :`Olá, ${nome}! Confirmamos que o pagamento da sua reserva no ${fl} está quitado. Obrigada! 😊`+ass}
+  else if(kind==='antes'){
+    t=`Olá, ${nome}! Falta pouco para a sua estadia no ${fl}. 🌴 Seguem as informações:\n\n📍 Endereço: ${f('end','endereço')}\n📅 Entrada: ${dlong(b.checkin)}, a partir das ${f('hin','horário de entrada')}\n📅 Saída: ${dlong(b.checkout)}, até as ${f('hout','horário de saída')}\n🔑 ${f('acesso','como entrar no flat')}\n\nO condomínio tem recepção 24 horas e o estacionamento é gratuito. Lembrando que não aceitamos animais de estimação.\n\nAvise por aqui o horário aproximado da chegada. Boa viagem!`+ass}
+  else if(kind==='boas'){
+    t=`Bem-vindos ao ${fl}, ${nome}! 🌞 Esperamos que tenham feito uma ótima viagem.\n\n📶 Wi-Fi: ${f('wifi','Wi-Fi')}\n🕚 Saída em ${dlong(b.checkout)}, até as ${f('hout','horário de saída')}\n\nQualquer coisa que precisarem, é só chamar por aqui. Aproveitem!`+ass}
+  else if(kind==='saida'){
+    t=`Bom dia, ${nome}! Hoje é o dia da saída, até as ${f('hout','horário de saída')}. 😊\n\nAntes de sair, por favor:\n• confira se não ficou nenhum pertence;\n• desligue o ar-condicionado, a TV e as luzes;\n• feche as janelas e a porta;\n• ${f('acesso','como devolver a chave')}.\n\nFoi um prazer receber vocês!`+ass}
+  else{
+    t=`Olá, ${nome}! Muito obrigada por escolherem o ${fl}. Foi um prazer receber vocês! 💙\n\n${(I.aval||'').trim()?`Se puderem, deixem uma avaliação da estadia: ${I.aval.trim()}\n\n`:''}Quando quiserem voltar, é só chamar por aqui. Acompanhem também o nosso Instagram, @beachclass01.`+ass}
+  return {t,miss:[...new Set(miss)]};
+}
+function vMsg(){
+  const I=minfoLoad(),books=msgBooks();
+  if(!books.some(b=>b.id===msgBk))msgBk=books[0]?.id||'';
+  const b=books.find(x=>x.id===msgBk);let h='';
+  if(!b)return ['Mensagens','','','<div class="card"><div class="empty">Ainda não há reservas para enviar mensagem. Cadastre uma reserva e volte aqui.</div></div>'];
+  const r=msgBuild(b,msgKey,I);if(mTxt==null)mTxt=r.t;
+  const ph=(b.phone||'').replace(/\D/g,'');
+  h+=`<div class="rs"><div class="card"><div class="rsh"><span class="n">1</span><div><h2>Escolha a reserva</h2></div></div>
+  <label>Hóspede<select data-msgbk>${books.map(x=>`<option value="${x.id}"${x.id===msgBk?' selected':''}>${esc(x.guest||'Sem nome')} · ${FLATS[x.flat].name.split(' ')[0]} · ${dm(x.checkin)} a ${dm(x.checkout)}</option>`).join('')}</select></label></div>
+  <div class="card"><div class="rsh"><span class="n">2</span><div><h2>Escolha a mensagem</h2></div></div>
+  <div class="mk">${MKINDS.map(([k,l])=>`<button data-mkey="${k}" aria-pressed="${k===msgKey}">${l}</button>`).join('')}</div></div>
+  <div class="card"><div class="rsh"><span class="n">3</span><div><h2>Confira e envie</h2><p>Você pode mexer no texto antes de enviar.</p></div></div>
+  ${r.miss.length?`<div class="warnbox" style="margin-bottom:10px">Falta preencher em "Dados das mensagens" (mais abaixo): ${r.miss.join(', ')}.</div>`:''}
+  <textarea id="msgtext" rows="14">${esc(mTxt)}</textarea>
+  <div class="mact"><button class="btn primary" data-act="mcopy">Copiar mensagem</button><button class="btn" data-act="mwa"${ph?'':' disabled'}>Abrir no WhatsApp</button><button class="btn" data-act="mreset">Voltar ao texto original</button></div>
+  ${ph?'':'<p class="muted" style="margin:8px 0 0">Esta reserva não tem telefone. Cadastre o telefone na reserva para abrir direto no WhatsApp.</p>'}</div>
+  <div class="card"><div class="rsh"><span class="n">4</span><div><h2>Dados das mensagens</h2><p>Preencha uma vez. Ficam salvos neste aparelho e entram sozinhos nos textos.</p></div></div>
+  ${MINFO.map(([k,l])=>`<label style="margin-bottom:12px">${l}<input data-minfo="${k}" value="${esc(I[k]||'')}"></label>`).join('')}</div></div>`;
+  return ['Mensagens','','',h];
+}
+
 function vSite(){
   const url=location.href.replace(/painel\.html.*$/,'');
   return ['Site dos hóspedes','','',`<div class="grid"><div class="card c7"><h2>Página pública</h2><div class="sub">Mostra só os dias livres e ocupados dos dois flats. O hóspede escolhe as datas e chama no WhatsApp.</div><div class="linkbox" id="sitelink">${esc(url)}</div><div class="row" style="margin-top:12px"><button class="btn primary" data-act="copysite">Copiar link</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a></div></div>
@@ -287,6 +339,7 @@ document.addEventListener('click',async ev=>{
   if(el=t.closest('[data-addrate]')){const se=el.dataset.addrate==='season';await put('rates',{id:uuid(),flat:el.dataset.flat,type:el.dataset.addrate,name:'',from_date:se?'2000-12-15':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),to_date:se?'2000-02-28':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),price:null,price_we:null});return}
   if(el=t.closest('[data-delrate]')){await drop('rates',el.dataset.delrate);return}
   if(el=t.closest('[data-delpay]')){F.payments.splice(+el.dataset.delpay,1);sheet();return}
+  if(el=t.closest('[data-mkey]')){msgKey=el.dataset.mkey;mTxt=null;render();return}
   if(el=t.closest('[data-fpill]')){ratesFlat=el.dataset.fpill;render();return}
   if(el=t.closest('[data-ypill]')){ratesYear=+el.dataset.ypill;render();return}
   if(el=t.closest('[data-addlw]')){const [fa,fb,fn]=el.dataset.addlw.split('|'),l={from:fa,to:fb};for(const fid of FIDS)if(!lwHasRow(fid,l))await put('rates',{id:uuid(),flat:fid,type:'especial',name:fn,from_date:fa,to_date:fb,price:null,price_we:null});return}
@@ -305,12 +358,16 @@ document.addEventListener('click',async ev=>{
   else if(a==='expdelask'){const d=$('#e-desc').value;E.descr=d;E.confirmDelete=true;expSheet(E)}
   else if(a==='expdelyes'){if(await drop('expenses',E.id))closeAll()}
   else if(a==='logout'){await Data.signOut();me=Data.live?false:me;render()}
+  else if(a==='mreset'){mTxt=null;render()}
+  else if(a==='mcopy'||a==='mwa'){const ta=$('#msgtext'),text=ta.value,b=S.bookings.find(x=>x.id===msgBk);
+    if(a==='mwa'){let ph=((b&&b.phone)||'').replace(/\D/g,'');if(ph.length<=11)ph='55'+ph;window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(text),'_blank','noopener');return}
+    try{await navigator.clipboard.writeText(text);el.textContent='Copiado!'}catch(e){ta.select();el.textContent='Texto selecionado: copie com Ctrl+C'}setTimeout(()=>{el.textContent='Copiar mensagem'},2500)}
   else if(a==='gorates'){ratesYear=+(el.dataset.year||ratesYear);tab='rates';render()}
   else if(a==='clearmsg'){msg='';render()}
   else if(a==='copyquote'||a==='copysite'){const src=a==='copysite'?$('#sitelink'):$('#f-msg'),text=a==='copysite'?src.textContent:src.value;
     try{await navigator.clipboard.writeText(text);el.textContent='Copiado'}catch(e){if(src.select)src.select();else{const r=document.createRange();r.selectNodeContents(src);const s=getSelection();s.removeAllRanges();s.addRange(r)}el.textContent='Selecionado, copie'}}
 });
-document.addEventListener('input',ev=>{const t=ev.target;if(!F||!t.id||!t.id.startsWith('f-'))return;
+document.addEventListener('input',ev=>{const t=ev.target;if(t.id==='msgtext'){mTxt=t.value;return}if(!F||!t.id||!t.id.startsWith('f-'))return;
   const map={'f-guest':'guest','f-phone':'phone','f-guests':'guests','f-adjust':'adjust','f-notes':'notes'};if(map[t.id]){F[map[t.id]]=t.value;if(t.id==='f-adjust'||t.id==='f-guest')live_()}});
 document.addEventListener('change',async ev=>{
   const t=ev.target;
@@ -318,6 +375,8 @@ document.addEventListener('change',async ev=>{
     if(t.id==='f-ci'){F.checkin=t.value;if(F.checkout<=F.checkin)F.checkout=iso(T(F.checkin)+DAY);sheet();return}if(t.id==='f-co'){F.checkout=t.value;live_();return}}
   if(F&&t.dataset.pay!==undefined){F.payments[+t.dataset.pay][t.dataset.f]=t.value;live_();return}
   if(t.dataset.flatfield){const fid=t.dataset.flat,cur=S.flats.find(x=>x.id===fid)||{id:fid,name:FLATS[fid].name,loc:FLATS[fid].loc};await put('flats',{...cur,[t.dataset.flatfield]:numIn(t.value)});return}
+  if(t.dataset.msgbk!==undefined){msgBk=t.value;mTxt=null;render();return}
+  if(t.dataset.minfo){const I=minfoLoad();I[t.dataset.minfo]=t.value;minfoSave(I);mTxt=null;setTimeout(render,0);return}
   if(t.dataset.lwprice){const [a,b,n]=t.dataset.lwprice.split('|'),fid=t.dataset.flat,v=numIn(t.value),r=lwRow(fid,{from:a,to:b});if(r)await put('rates',{...r,price:v});else if(v!=null)await put('rates',{id:uuid(),flat:fid,type:'especial',name:n,from_date:a,to_date:b,price:v,price_we:null});return}
   if(t.dataset.addhol!==undefined){if(!t.value)return;const [a,b,n]=t.value.split('|');await put('rates',{id:uuid(),flat:t.dataset.flat,type:'especial',name:n,from_date:a,to_date:b,price:null,price_we:null});return}
   if(t.dataset.rate&&t.dataset.part){const r=S.rates.find(x=>x.id===t.dataset.rate);if(!r)return;const f=t.dataset.f,cur=r[f]||'2000-01-01';let m=+cur.slice(5,7)||1,d=+cur.slice(8,10)||1;if(t.dataset.part==='d')d=+t.value;else m=+t.value;d=Math.min(d,[31,29,31,30,31,30,31,31,30,31,30,31][m-1]);await put('rates',{...r,[f]:'2000-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')});return}

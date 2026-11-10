@@ -436,3 +436,11 @@ html{scroll-behavior:smooth}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .foot::before{background:linear-gradient(180deg,var(--bg) 0%,rgba(20,23,22,0) 38%,rgba(8,20,22,.4) 55%,rgba(8,20,22,.85) 100%)}}
 .foot>*{position:relative;z-index:1;text-shadow:0 1px 12px rgba(0,0,0,.45)}
 .foot p{color:#fff}
+
+.mk{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mk button{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 12px;font-weight:700;font-size:15.5px;text-align:left;cursor:pointer}
+.mk button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (max-width:520px){.mk{grid-template-columns:1fr}}
+#msgtext{width:100%;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px;line-height:1.5;background:var(--surface);resize:vertical;min-height:260px}
+.mact{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.rs .btn[disabled]{opacity:.45;cursor:not-allowed}
