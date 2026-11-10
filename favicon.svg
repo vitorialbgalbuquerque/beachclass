@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1FA3A0"/>
+      <stop offset="0.55" stop-color="#6FD3CB"/>
+      <stop offset="1" stop-color="#F6E7C8"/>
+    </linearGradient>
+    <linearGradient id="sol" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF6DC"/>
+      <stop offset="1" stop-color="#FFD98A"/>
+    </linearGradient>
+    <clipPath id="quad"><rect width="1080" height="1080"/></clipPath>
+  </defs>
+  <g clip-path="url(#quad)">
+    <rect width="1080" height="1080" fill="url(#ceu)"/>
+    <!-- sol -->
+    <circle cx="540" cy="440" r="190" fill="url(#sol)"/>
+    <circle cx="540" cy="440" r="235" fill="#FFF6DC" opacity="0.25"/>
+    <!-- mar: ondas -->
+    <path d="M0 560 C 120 520, 220 520, 340 560 S 560 600, 680 560 S 940 520, 1080 560 L1080 1080 L0 1080 Z" fill="#1B8F94" opacity="0.95"/>
+    <path d="M0 640 C 130 600, 240 600, 360 640 S 580 680, 700 640 S 950 600, 1080 640 L1080 1080 L0 1080 Z" fill="#17777F"/>
+    <path d="M0 730 C 140 690, 250 690, 380 730 S 600 770, 720 730 S 960 690, 1080 730 L1080 1080 L0 1080 Z" fill="#F6E7C8"/>
+    <path d="M0 730 C 140 690, 250 690, 380 730 S 600 770, 720 730 S 960 690, 1080 730" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+    <!-- areia -->
+    <path d="M0 830 C 200 800, 380 860, 560 830 S 900 800, 1080 840 L1080 1080 L0 1080 Z" fill="#EBD4A6"/>
+    <!-- brilho do sol na agua -->
+    <g stroke="#FFF6DC" stroke-width="8" stroke-linecap="round" opacity="0.8">
+      <line x1="470" y1="610" x2="610" y2="610"/>
+      <line x1="500" y1="640" x2="580" y2="640"/>
+    </g>
+  </g>
+</svg>
