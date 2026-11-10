@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=31">
+<link rel="stylesheet" href="style.css?v=32">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -277,7 +277,7 @@ function vSite(){
 }
 
 /* ---------- janela de reserva ---------- */
-function newForm(kind,flat,ci){const d=ci||todayIso();F={id:null,kind,flat:flat||'summer',guest:'',phone:'',guests:'',checkin:d,checkout:iso(T(d)+DAY*(kind==='bloqueio'?1:2)),status:'confirmada',adjust:'',notes:'',payments:[],confirmDelete:false,err:''};sheet()}
+function newForm(kind,flat,ci){const d=ci||todayIso();F={id:null,kind,flat:flat||'summer',guest:'',phone:'',guests:'',checkin:d,checkout:iso(T(d)+DAY*(kind==='bloqueio'?1:2)),status:kind==='bloqueio'?'confirmada':'pre',adjust:'',notes:'',payments:[],confirmDelete:false,err:''};sheet()}
 function editForm(id){const b=S.bookings.find(x=>x.id===id);if(!b)return;F={...b,adjust:b.adjust||'',guests:b.guests||'',payments:(b.payments||[]).map(p=>({...p})),confirmDelete:false,err:''};sheet()}
 const calcF=()=>{const q=quote(F.flat,F.checkin,F.checkout),adj=numIn(F.adjust)||0;return {...q,adj,total:q.rent+(q.cleaning||0)+adj}};
 function quoteHtml(q){let h='';q.groups.forEach(g=>{h+=`<span>${g.nights} noite${g.nights>1?'s':''} · ${esc(g.name)} · ${brl(g.price)}</span><span>${brl(g.nights*g.price)}</span>`});
@@ -288,22 +288,25 @@ const paysHtml=()=>!F.payments.length?'<div class="muted" style="padding:6px 0;f
 function msgText(){const q=calcF(),nm=(F.guest||'').split(' ')[0],L=[`Olá${nm?', '+nm:''}! Segue o orçamento do Beach Class ${FLATS[F.flat].name} (${FLATS[F.flat].loc}):`,`Entrada ${dmy(F.checkin)} · Saída ${dmy(F.checkout)} (${q.nights} noite${q.nights===1?'':'s'})`];q.groups.forEach(g=>L.push(`${g.nights} x ${brl(g.price)} (${g.name})`));L.push(`Diárias: ${brl(q.rent+q.adj)}`,`Taxa de limpeza: ${q.cleaning==null?'a definir':brl(q.cleaning)}`,`Total: ${brl(q.total)}`);return L.join('\n')}
 function warns(){const cf=conflicts(F.flat,F.checkin,F.checkout,F.id);const hs=F.checkout>F.checkin?holidaysIn(F.checkin,F.checkout):[];return `${hs.length?`<div class="infobox" style="margin-top:8px"><b>Feriados na estadia:</b> ${hs.map(h=>`${dm(h.d)} ${esc(h.n)}${h.t==='fac'?' (ponto facultativo)':''}`).join('; ')}. Se tiverem preço especial, cadastre em Diárias.</div>`:''}${F.checkout<=F.checkin?'<div class="warnbox">A saída precisa ser depois da entrada.</div>':''}${cf.length&&F.status!=='cancelada'?`<div class="warnbox">Estas datas já estão ocupadas: ${cf.map(b=>`${esc(b.guest||'Bloqueio')} (${dm(b.checkin)} a ${dm(b.checkout)})`).join(', ')}.</div>`:''}${F.err?`<div class="warnbox">${esc(F.err)}</div>`:''}`}
 function sheet(keep){
-  const m=$('#modal');if(!F){m.innerHTML='';return}
+  const m=$('#modal');if(!F){m.innerHTML='';document.body.classList.remove('modal-open');return}
   if(keep&&m.contains(document.activeElement))return;
   const bl=F.kind==='bloqueio',n=nightsBetween(F.checkin,F.checkout),q=calcF(),sal=q.total-F.payments.reduce((s,p)=>s+(Number(p.amount)||0),0);
-  m.innerHTML=`<div class="scrim" data-scrim><div class="sheet" role="dialog"><div class="row sb"><h2 style="margin:0">${bl?(F.id?'Editar bloqueio':'Novo bloqueio'):(F.id?'Editar reserva':'Nova reserva')}</h2><button class="btn small" data-act="closesheet">Fechar</button></div>
+  m.innerHTML=`<div class="scrim" data-scrim><div class="sheet bk" role="dialog"><div class="sh-h"><h2>${bl?(F.id?'Editar bloqueio':'Novo bloqueio'):(F.id?'Editar reserva':'Nova reserva')}</h2><button class="btn" data-act="closesheet">Fechar ✕</button></div><div class="sh-b">
   <div class="grid2 stack"><label>Flat<select id="f-flat">${FIDS.map(f=>`<option value="${f}" ${F.flat===f?'selected':''}>${FLATS[f].name}</option>`).join('')}</select></label>
-  ${bl?`<label>Motivo<input id="f-guest" value="${esc(F.guest)}" placeholder="Uso dos donos"></label>`:`<label>Situação<select id="f-status"><option value="confirmada" ${F.status==='confirmada'?'selected':''}>Confirmada</option><option value="pre" ${F.status==='pre'?'selected':''}>Pré-reserva</option><option value="cancelada" ${F.status==='cancelada'?'selected':''}>Cancelada</option></select></label>`}</div>
+  ${bl?`<label>Motivo<input id="f-guest" value="${esc(F.guest)}" placeholder="Uso dos donos"></label>`:(F.id?`<label>Situação<select id="f-status"><option value="confirmada" ${F.status==='confirmada'?'selected':''}>Confirmada</option><option value="pre" ${F.status==='pre'?'selected':''}>Pré-reserva</option><option value="cancelada" ${F.status==='cancelada'?'selected':''}>Cancelada</option></select></label>`:`<div class="prenote"><b>Será salva como pré-reserva.</b> Depois que o sinal for pago, abra a reserva e mude a situação para Confirmada.</div>`)}</div>
   <div class="grid2"><label>Entrada<input type="date" id="f-ci" value="${F.checkin}"></label><label>Saída<input type="date" id="f-co" value="${F.checkout}"></label></div>
   <div class="muted" style="margin-top:6px;font-size:13px" id="f-nights">${n} noite${n===1?'':'s'}</div><div id="f-warn">${warns()}</div>
   ${bl?`<label style="margin-top:10px">Observação<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>`:`
   <div class="grid2"><label>Hóspede<input id="f-guest" value="${esc(F.guest)}" placeholder="Nome"></label><label>WhatsApp<input id="f-phone" inputmode="tel" value="${esc(F.phone||'')}" placeholder="81 90000-0000"></label></div>
-  <div class="grid2"><label>Pessoas (até 8)<input id="f-guests" inputmode="numeric" value="${esc(F.guests)}"></label><label>Ajuste (R$, negativo = desconto)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label></div>
+  <label style="margin-top:10px">Quantas pessoas (até 8)<input id="f-guests" inputmode="numeric" value="${esc(F.guests)}"></label>
   <div class="box"><div class="h3">Valores</div><div class="quote" id="f-quote">${quoteHtml(q)}</div></div>
+  <details class="more"><summary>Pagamentos, desconto e observações</summary>
+  <label style="margin-top:12px">Desconto ou acréscimo (R$, negativo = desconto)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label>
   <div class="box"><div class="row sb"><div class="h3" style="margin:0">Pagamentos</div><button class="btn small" data-act="addpay">+ Pagamento</button></div><div id="f-pays">${paysHtml()}</div><div class="row sb" style="margin-top:10px"><span class="muted">Saldo a receber</span><b id="f-saldo" class="${sal>0.005?'neg':'pos'}">${brl(sal)}</b></div></div>
   <label style="margin-top:12px">Observações<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>
-  <div class="box"><div class="row sb"><div class="h3" style="margin:0">Mensagem para o hóspede</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div>`}
-  <div class="row" style="margin-top:16px"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">Salvar</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
+  <div class="box"><div class="row sb"><div class="h3" style="margin:0">Mensagem para o hóspede</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div></details>`}</div>
+  <div class="sh-f"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">Salvar</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
+  document.body.classList.add('modal-open');
 }
 function live_(){
   const q=calcF(),n=nightsBetween(F.checkin,F.checkout),set=(i,h)=>{const e=$(i);if(e)e.innerHTML=h};
@@ -329,7 +332,7 @@ function expSheet(e){
   <label style="margin-top:10px">Descrição<input id="e-desc" value="${esc(E.descr||'')}" placeholder="ex.: condomínio de dezembro"></label>
   <div class="row" style="margin-top:16px"><button class="btn primary" data-act="saveexp" style="flex:1;justify-content:center">Salvar</button>${E.id?(E.confirmDelete?'<button class="btn danger" data-act="expdelyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="expdelask">Excluir</button>'):''}</div></div></div>`;
 }
-const closeAll=()=>{F=null;E=null;$('#modal').innerHTML=''};
+const closeAll=()=>{F=null;E=null;$('#modal').innerHTML='';document.body.classList.remove('modal-open')};
 
 /* ---------- eventos ---------- */
 document.addEventListener('submit',async ev=>{

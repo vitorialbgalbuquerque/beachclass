@@ -444,3 +444,21 @@ html{scroll-behavior:smooth}
 #msgtext{width:100%;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:16px;line-height:1.5;background:var(--surface);resize:vertical;min-height:260px}
 .mact{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .rs .btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* Janela de reserva: cabeçalho e botão Salvar sempre visíveis */
+body.modal-open{overflow:hidden}
+.scrim{overscroll-behavior:contain}
+.sheet.bk{display:flex;flex-direction:column;padding:0;max-height:min(92vh,92dvh);overflow:hidden}
+.sh-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+.sh-h h2{margin:0;font-size:20px}
+.sh-h .btn{min-height:44px;font-size:16px;white-space:nowrap}
+.sh-b{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;flex:1;min-height:0}
+.sh-f{display:flex;gap:10px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--bg);flex:none}
+.sh-f .btn{min-height:50px;font-size:17px}
+@media (max-width:640px){.sheet.bk{border-radius:0;max-height:none;height:100vh;height:100dvh}.scrim:has(.sheet.bk){align-items:stretch}}
+.sheet input,.sheet select,.sheet textarea{font-size:16px}
+.prenote{background:var(--accent-soft);color:var(--ink);border-radius:12px;padding:12px;font-size:14.5px;line-height:1.4;align-self:end}
+details.more{margin-top:14px}
+details.more summary{cursor:pointer;font-weight:700;padding:12px 14px;background:var(--surface);border-radius:12px;list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:" ▾";color:var(--muted)}
