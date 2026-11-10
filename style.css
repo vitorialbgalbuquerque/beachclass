@@ -396,3 +396,7 @@ tr:last-child td{border-bottom:0}
 .fer .ft{display:flex;flex-direction:column;gap:2px}.fer .ft span{font-size:14px;color:var(--muted)}
 .fer.falta .ft b::after{content:" · sem preço";color:#b45309;font-weight:600}
 .okbox{background:#e6f4ea;color:#1e6b3a;border-radius:10px;padding:10px 12px;font-size:15px;font-weight:600}
+
+.nb{margin:4px 0 14px}.nb>b{display:block;font-size:14px;margin-bottom:4px}
+.nr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:14.5px}
+.nr span:last-child{color:var(--muted);white-space:nowrap}
