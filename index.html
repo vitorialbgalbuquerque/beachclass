@@ -3,17 +3,41 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Beach Class | Disponibilidade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=26">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Fraunces:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css?v=27">
 </head><body>
+<header class="hero">
+  <img src="fotos/summer/33.jpg" alt="Vista aérea das piscinas e dos jardins do condomínio">
+  <div class="hero-in">
+    <div class="hbrand"><span class="logo-m">BC01</span><span>BEACH CLASS</span></div>
+    <div class="hbot">
+      <h1>Seu descanso a poucos passos do mar.</h1>
+      <p>Flat completo em Porto de Galinhas, dentro de um condomínio com piscinas, restaurante e muito espaço para todo o grupo.</p>
+      <div class="hloc"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.500 7 12 7 12zM12 11.500a2.500 2.500 0 100-5 2.500 2.500 0 000 5z"/></svg>Porto de Galinhas, Ipojuca (PE) · a poucos minutos a pé da Praia do Cupe</div>
+      <a class="hcta" href="#datas">Ver datas livres ↓</a>
+    </div>
+  </div>
+</header>
 <div class="pub">
-  <div class="brand"><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
+  <div class="brand" hidden><div class="logo-m" style="width:42px;height:42px;border-radius:13px;font-size:15px">BC01</div><div><b>Beach Class</b><div class="muted" style="font-size:13px"><span id="sub">Flats em Porto de Galinhas</span></div></div></div>
   
   
+  <section class="exp">
+    <div class="eyebrow">A experiência</div>
+    <h2>Aqui o dia começa sem pressa.</h2>
+    <p>Um café na varanda, de frente para o jardim. A manhã na piscina, a tarde na praia e a noite de volta a um flat climatizado, com cozinha completa e tudo no lugar para o grupo inteiro descansar.</p>
+    <ul class="hl">
+      <li><b>Até 8</b><span>pessoas</span></li>
+      <li><b>2</b><span>quartos climatizados</span></li>
+      <li><b>Piscinas</b><span>e playground</span></li>
+      <li><b>24 h</b><span>recepção e conveniência</span></li>
+    </ul>
+  </section>
   <div class="flatpick" id="flats"></div>
   <section class="about" id="about"></section>
 <div id="lb" class="lb" hidden></div>
-  <h3 class="sec">Escolha as datas da sua estadia</h3>
+  <div class="eyebrow" id="datas" style="margin-top:34px">Disponibilidade</div>
+  <h2 class="h2s">Escolha as datas da sua estadia</h2>
   <div class="muted" style="font-size:13.5px;margin-bottom:8px">Os dias em verde estão livres.</div>
   <div class="card pubcal" style="margin-top:14px">
     <div class="head"><button class="nv" id="prev" aria-label="Mês anterior">‹</button><b id="title"></b><button class="nv" id="next" aria-label="Próximo mês">›</button></div>
@@ -25,6 +49,7 @@
   <p id="demo" class="infobox" hidden>Modo demonstração: dados de exemplo, só neste navegador.</p>
   <p id="err" class="warnbox" hidden>Não foi possível carregar a disponibilidade agora. Chame no WhatsApp para confirmar as datas.</p>
 </div>
+<footer class="foot"><div class="hbrand" style="justify-content:center"><span class="logo-m">BC01</span><span>BEACH CLASS</span></div><p>Flats para temporada em Porto de Galinhas, Ipojuca (PE).</p><div class="fl"><a href="https://instagram.com/beachclass01" target="_blank" rel="noopener">Instagram @beachclass01</a><a id="fwa" target="_blank" rel="noopener">WhatsApp</a></div></footer>
 <div class="cta-bar"><div class="in"><div id="pick" style="font-size:14.5px"></div><a class="cta" id="cta" target="_blank" rel="noopener">Chamar no WhatsApp</a><button class="lnk" id="clear" hidden>Limpar datas</button></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
@@ -33,6 +58,8 @@
 (async function(){
 const {Data,C,FLATS,MESES,T,iso,DAY,todayIso,holidayAt,HTYPE}=BC;
 const $=s=>document.getElementById(s);
+{const h=document.querySelector('.hero'),cb=document.querySelector('.cta-bar');if(h&&cb&&'IntersectionObserver' in window){cb.classList.add('away');new IntersectionObserver(([en])=>cb.classList.toggle('away',en.intersectionRatio>.6),{threshold:[0,.6,1]}).observe(h)}}
+{const fw=document.getElementById('fwa');if(fw)fw.href='https://wa.me/'+(C.WHATSAPP||'5581986541856');}
 const today=todayIso();
 const ATIVOS=Object.keys(FLATS).filter(f=>f!=='solare'||C.SOLARE_ATIVO);
 if(C.SOLARE_ATIVO)$('sub').textContent='Flats em Porto de Galinhas e Muro Alto';
