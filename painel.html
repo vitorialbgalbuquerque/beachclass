@@ -5,7 +5,7 @@
 <title>Painel BC01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=23">
+<link rel="stylesheet" href="style.css?v=24">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -141,6 +141,7 @@ function vRes(){
 }
 
 /* ---------- diárias ---------- */
+const dmSel=(r,f)=>{const v=r[f]||'2000-01-01',m=+v.slice(5,7)||1,d=+v.slice(8,10)||1;return `<div class="dmr"><select data-rate="${r.id}" data-f="${f}" data-part="d">${Array.from({length:31},(_,i)=>`<option value="${i+1}"${i+1===d?' selected':''}>${i+1}</option>`).join('')}</select><select data-rate="${r.id}" data-f="${f}" data-part="m">${MESES.map((n,i)=>`<option value="${i+1}"${i+1===m?' selected':''}>${n}</option>`).join('')}</select></div>`};
 function vRates(){
   const y0=+todayIso().slice(0,4),YEARS=[y0,y0+1,y0+2];if(!YEARS.includes(ratesYear))ratesYear=y0;
   const yStr=String(ratesYear),yStart=ratesYear===y0?todayIso():yStr+'-01-01',cnt=y=>S.rates.filter(r=>r.type==='especial'&&(r.from_date||'').slice(0,4)===String(y)).length;
@@ -151,7 +152,7 @@ function vRates(){
   h+='<div class="grid">';
   FIDS.forEach(fid=>{
     const c=flatCfg(fid),seas=S.rates.filter(r=>r.flat===fid&&r.type==='season').sort((a,b)=>(a.from_date||'').slice(5).localeCompare((b.from_date||'').slice(5))),esp=S.rates.filter(r=>r.flat===fid&&r.type==='especial'&&(r.from_date||'').slice(0,4)===yStr).sort((a,b)=>(a.from_date||'').localeCompare(b.from_date||''));
-    const row=r=>{const se=r.type==='season';return `<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label><label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label><label>${se?'Semana (dom a qui)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (sex e sáb)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`};
+    const row=r=>{const se=r.type==='season';return `<div class="${se?'se':''}"><label>${se?'Temporada (repete todo ano; vale só o dia e o mês)':'Feriado ou data especial (todas as noites)'}<input data-rate="${r.id}" data-f="name" value="${esc(r.name||'')}" placeholder="${se?'Alta temporada':'Carnaval, Réveillon'}"></label>${se?`<div class="dm"><span>De</span>${dmSel(r,'from_date')}</div><div class="dm"><span>Até</span>${dmSel(r,'to_date')}</div>`:`<label>De<input type="date" data-rate="${r.id}" data-f="from_date" value="${r.from_date||''}"></label><label>Até<input type="date" data-rate="${r.id}" data-f="to_date" value="${r.to_date||''}"></label>`}<label>${se?'Semana (dom a qui)':'Diária (R$)'}<input inputmode="decimal" data-rate="${r.id}" data-f="price" value="${r.price??''}" placeholder="0"></label>${se?`<label>Fim de semana (sex e sáb)<input inputmode="decimal" data-rate="${r.id}" data-f="price_we" value="${r.price_we??''}" placeholder="igual à semana"></label>`:''}<button class="btn danger small" data-delrate="${r.id}">Remover</button></div>`};
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div>
     <div class="h3" style="margin:14px 0 8px">Diária base (por noite) e limpeza</div>
     <div class="basegrid"><label>Semana (dom a qui)<input inputmode="decimal" data-flatfield="base" data-flat="${fid}" value="${c.base??''}" placeholder="ex.: 450"></label><label>Fim de semana (sex e sáb)<input inputmode="decimal" data-flatfield="base_we" data-flat="${fid}" value="${c.base_we??''}" placeholder="igual à semana"></label><label>Limpeza por hospedagem<input inputmode="decimal" data-flatfield="cleaning" data-flat="${fid}" value="${c.cleaning??''}" placeholder="ex.: 150"></label></div>
@@ -296,6 +297,7 @@ document.addEventListener('change',async ev=>{
   if(F&&t.dataset.pay!==undefined){F.payments[+t.dataset.pay][t.dataset.f]=t.value;live_();return}
   if(t.dataset.flatfield){const fid=t.dataset.flat,cur=S.flats.find(x=>x.id===fid)||{id:fid,name:FLATS[fid].name,loc:FLATS[fid].loc};await put('flats',{...cur,[t.dataset.flatfield]:numIn(t.value)});return}
   if(t.dataset.addhol!==undefined){if(!t.value)return;const [a,b,n]=t.value.split('|');await put('rates',{id:uuid(),flat:t.dataset.flat,type:'especial',name:n,from_date:a,to_date:b,price:null,price_we:null});return}
+  if(t.dataset.rate&&t.dataset.part){const r=S.rates.find(x=>x.id===t.dataset.rate);if(!r)return;const f=t.dataset.f,cur=r[f]||'2000-01-01';let m=+cur.slice(5,7)||1,d=+cur.slice(8,10)||1;if(t.dataset.part==='d')d=+t.value;else m=+t.value;d=Math.min(d,[31,29,31,30,31,30,31,31,30,31,30,31][m-1]);await put('rates',{...r,[f]:'2000-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')});return}
   if(t.dataset.rate){const r=S.rates.find(x=>x.id===t.dataset.rate);if(!r)return;const row={...r};let v=t.value;if(t.dataset.f==='price'||t.dataset.f==='price_we')v=numIn(v);if(v===''&&t.dataset.f!=='name')v=null;row[t.dataset.f]=v;await put('rates',row)}
 });
 

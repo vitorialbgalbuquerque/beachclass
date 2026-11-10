@@ -374,3 +374,6 @@ tr:last-child td{border-bottom:0}
 .slc1 img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin-bottom:6px;display:block}
 .slc1 span{color:var(--muted)}
 .slc{margin-top:10px;font-size:13.5px;color:var(--accent);font-weight:600}
+
+.dm{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);font-weight:600}
+.dmr{display:grid;grid-template-columns:72px 1fr;gap:8px}
