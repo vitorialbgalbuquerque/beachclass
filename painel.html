@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=34">
+<link rel="stylesheet" href="style.css?v=35">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -241,9 +241,11 @@ function msgBuild(b,kind,I){
      +`🌴 NO CONDOMÍNIO\n• Recepção e conveniência 24 horas\n• Piscinas adulto e infantil\n• Playground e brinquedoteca\n• Academia, quadras esportivas e coworking\n• Lavanderia\n• Carregador para carros elétricos\n• Restaurante Umbu Cajá, com café da manhã em buffet livre (valores pagos direto ao restaurante: adultos R$ 45; R$ 32 reservando direto com o restaurante com 24 horas de antecedência; crianças de 6 a 10 anos R$ 20; até 5 anos cortesia)\n\n`
      +`📍 A Praia do Cupe fica a poucos minutos a pé.\n\nLembrando que não aceitamos animais de estimação. Qualquer coisa que precisarem, é só chamar por aqui. Aproveitem!`+ass}
   else if(kind==='docs'){
-    t=`Olá, ${nome}! Para o registro da hospedagem e o cadastro de vocês na portaria do condomínio, preciso que me enviem, por aqui:\n\n`
-     +`1️⃣ Nome completo\n2️⃣ CPF\n3️⃣ RG\n4️⃣ Foto do rosto (de frente, com boa luz)\n5️⃣ Se forem de carro: modelo, cor e placa\n\n`
-     +`Os dados são de cada hóspede adulto${b.guests?` (reserva para ${b.guests} pessoas)`:''}. Para crianças, enviem o nome completo e a idade.\n\nUsamos essas informações somente para o cadastro da estadia. Obrigada!`+ass}
+    t=`Olá, ${nome}! Para o cadastro de vocês no aplicativo do condomínio, preciso que me enviem, por aqui, os dados abaixo.\n\n`
+     +`👤 HÓSPEDE PRINCIPAL\n1️⃣ Nome completo (máximo de 50 caracteres)\n2️⃣ E-mail\n3️⃣ Telefone com DDD\n4️⃣ CPF (se for estrangeiro, informe o passaporte ou DNI)\n5️⃣ RG ou DNI\n6️⃣ Endereço completo (rua, número, bairro, cidade e estado)\n7️⃣ Foto do rosto, de frente e com boa luz\n\n`
+     +`👥 ACOMPANHANTES${b.guests?` (a reserva é para ${b.guests} pessoas)`:''}\nNome completo, CPF e RG de cada adulto.\n\n`
+     +`🧒 CRIANÇAS\nNome completo e idade de cada uma.\n\n`
+     +`🚗 CARRO (se vierem de carro)\nModelo, cor e placa.\n\nUsamos essas informações somente para o cadastro da estadia no condomínio. Obrigada!`+ass}
   else if(kind==='saida'){
     t=`Bom dia, ${nome}! Hoje é o dia da saída, até as ${f('hout','horário de saída')}. 😊\n\nAntes de sair, por favor:\n• confira se não ficou nenhum pertence;\n• desligue o ar-condicionado, a TV e as luzes;\n• feche as janelas e a porta;\n• ${f('acesso','como devolver a chave')}.\n\nFoi um prazer receber vocês!`+ass}
   else{
