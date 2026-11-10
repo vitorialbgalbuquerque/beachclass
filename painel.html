@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=36">
+<link rel="stylesheet" href="style.css?v=37">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -213,7 +213,7 @@ function vFin(){
 
 /* ---------- site ---------- */
 /* ---------- mensagens prontas ---------- */
-const MINFO=[['assin','Assinatura','Beach Class'],['end','Endereço do flat','Beach Class Summer Residence, R. Frei Damião, s/n, Cupe, Ipojuca (PE)'],['hin','Horário de entrada (check-in)','14h'],['hout','Horário de saída (check-out)','12h (meio-dia)'],['acesso','Como entrar no flat (chave, portaria, código)',''],['wifi','Wi-Fi (nome e senha)',''],['pix','Chave Pix',''],['aval','Link para avaliação (Google, opcional)','']];
+const MINFO=[['assin','Assinatura','Beach Class'],['end','Endereço do flat','Beach Class Summer Residence, R. Frei Damião, s/n, Cupe, Ipojuca (PE)'],['hin','Horário de entrada (check-in)','14h'],['hout','Horário de saída (check-out)','12h (meio-dia)'],['acesso','Como entrar no flat (chave, portaria, código)',''],['wifi','Wi-Fi (nome e senha)','Rede: Flat 01 | Senha: 03152203411'],['pix','Chave Pix',''],['aval','Link para avaliação (Google, opcional)','']];
 const MKINDS=[['conf','Confirmação da reserva'],['pag','Pagamento e saldo'],['antes','Antes da chegada'],['boas','Boas-vindas e informações do flat'],['docs','Pedir documentos'],['regras','Regras de convivência'],['saida','Dia da saída'],['obg','Agradecimento']];
 const minfoLoad=()=>{let o={};try{o=JSON.parse(localStorage.getItem('bc01_msginfo')||'{}')}catch(e){}MINFO.forEach(([k,,d])=>{if(o[k]==null)o[k]=d});return o};
 const minfoSave=o=>{try{localStorage.setItem('bc01_msginfo',JSON.stringify(o))}catch(e){}};
