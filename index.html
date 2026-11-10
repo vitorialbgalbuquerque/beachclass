@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Fraunces:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=32">
+<link rel="stylesheet" href="style.css?v=33">
 </head><body>
 <header class="hero">
   <img src="fotos/hero.jpg" alt="Piscina do condomínio com espreguiçadeiras dentro d’água e pergolados">
@@ -39,6 +39,7 @@
   </section>
   <div class="flatpick" id="flats"></div>
   <section class="about" id="about"></section>
+  <section class="revs" id="reviews" hidden></section>
 <div id="lb" class="lb" hidden></div>
   <div class="eyebrow" id="datas" style="margin-top:34px">Disponibilidade</div>
   <h2 class="h2s">Escolha as datas da sua estadia</h2>
@@ -60,7 +61,7 @@
 <script src="core.js?v=7"></script>
 <script>
 (async function(){
-const {Data,C,FLATS,MESES,T,iso,DAY,todayIso,holidayAt,HTYPE}=BC;
+const {esc,Data,C,FLATS,MESES,T,iso,DAY,todayIso,holidayAt,HTYPE}=BC;
 const $=s=>document.getElementById(s);
 {const h=document.querySelector('.hero'),cb=document.querySelector('.cta-bar');if(h&&cb&&'IntersectionObserver' in window){cb.classList.add('away');new IntersectionObserver(([en])=>cb.classList.toggle('away',en.intersectionRatio>.6),{threshold:[0,.6,1]}).observe(h)}}
 {const fw=document.getElementById('fwa');if(fw)fw.href='https://wa.me/'+(C.WHATSAPP||'5581986541856');}
@@ -200,6 +201,10 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#clear')){a=b=null;draw()}
 });
 draw();
+Data.reviews().then(rs=>{rs=(rs||[]).filter(r=>ATIVOS.includes(r.flat));if(!rs.length)return;
+  const avg=rs.reduce((a,r)=>a+(+r.stars||0),0)/rs.length,st=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+  $('reviews').innerHTML=`<div class="eyebrow">Avaliações</div><h2 class="h2s">Quem já se hospedou</h2><div class="avg"><b>★ ${avg.toFixed(1).replace('.',',')}</b><span>${rs.length} avaliaç${rs.length>1?'ões':'ão'}</span></div><div class="rvl">${rs.map(r=>`<figure class="rv"><div class="stt">${st(+r.stars||5)}</div><blockquote>${esc(r.text||'')}</blockquote><figcaption><b>${esc(r.guest||'Hóspede')}</b>${r.stay?`<span>${esc(r.stay)}</span>`:''}</figcaption></figure>`).join('')}</div>`;
+  $('reviews').hidden=false}).catch(()=>{});
 })();
 </script>
 </body></html>

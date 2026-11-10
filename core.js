@@ -54,18 +54,19 @@ const Data={
   },
   async signOut(){if(live)await sb.auth.signOut()},
   async loadAll(){
-    if(!live){const s=demoLoad();return {flats:s.flats,rates:s.rates,bookings:s.bookings,expenses:s.expenses}}
+    if(!live){const s=demoLoad();return {flats:s.flats,rates:s.rates,bookings:s.bookings,expenses:s.expenses,reviews:s.reviews||[],reviewsOk:true}}
     const r=await Promise.all(['flats','rates','bookings','expenses'].map(t=>sb.from(t).select('*')));
     r.forEach(x=>{if(x.error)throw x.error});
-    return {flats:r[0].data,rates:r[1].data,bookings:r[2].data,expenses:r[3].data};
+    let rv=[],rvOk=true;try{const x=await sb.from('reviews').select('*');if(x.error)rvOk=false;else rv=x.data||[]}catch(e){rvOk=false}
+    return {flats:r[0].data,rates:r[1].data,bookings:r[2].data,expenses:r[3].data,reviews:rv,reviewsOk:rvOk};
   },
   async save(table,row){
     if(!row.id)row.id=uuid();
-    if(!live){const s=demoLoad(),i=s[table].findIndex(x=>x.id===row.id);if(i>=0)s[table][i]=row;else s[table].push(row);demoSave(s);return row}
+    if(!live){const s=demoLoad();s[table]=s[table]||[];const i=s[table].findIndex(x=>x.id===row.id);if(i>=0)s[table][i]=row;else s[table].push(row);demoSave(s);return row}
     const {error}=await sb.from(table).upsert(row);if(error)throw error;return row;
   },
   async remove(table,id){
-    if(!live){const s=demoLoad();s[table]=s[table].filter(x=>x.id!==id);demoSave(s);return}
+    if(!live){const s=demoLoad();s[table]=(s[table]||[]).filter(x=>x.id!==id);demoSave(s);return}
     const {error}=await sb.from(table).delete().eq('id',id);if(error)throw error;
   },
   /* Público: só flat e datas ocupadas. */
@@ -74,6 +75,11 @@ const Data={
     if(!live){demoLoad().bookings.filter(b=>b.status!=='cancelada').forEach(b=>(out[b.flat]||[]).push([b.checkin,b.checkout]));return out}
     const {data,error}=await sb.rpc('availability');if(error)throw error;
     data.forEach(b=>(out[b.flat]||[]).push([b.checkin,b.checkout]));return out;
+  },
+  /* Público: só avaliações marcadas como publicadas. */
+  async reviews(){
+    if(!live)return (demoLoad().reviews||[]).filter(r=>r.published!==false);
+    const {data,error}=await sb.rpc('public_reviews');if(error)return [];return data||[];
   },
   resetDemo(){try{localStorage.removeItem(KEY)}catch(e){}}
 };

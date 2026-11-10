@@ -462,3 +462,10 @@ details.more{margin-top:14px}
 details.more summary{cursor:pointer;font-weight:700;padding:12px 14px;background:var(--surface);border-radius:12px;list-style:none}
 details.more summary::-webkit-details-marker{display:none}
 details.more summary::after{content:" ▾";color:var(--muted)}
+
+.revs{padding:30px 0 6px}
+.avg{display:flex;align-items:baseline;gap:10px;margin:0 0 14px}.avg b{font-family:"Fraunces",Georgia,serif;font-weight:500;font-size:26px;color:var(--sand)}.avg span{color:var(--muted);font-size:14px}
+.rvl{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+.rv{flex:0 0 84%;max-width:320px;scroll-snap-align:start;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.rv .stt{color:var(--sand);letter-spacing:2px}.rv blockquote{margin:0;font-size:15px;line-height:1.55}
+.rv figcaption{display:flex;flex-direction:column;gap:2px;font-size:14px}.rv figcaption span{color:var(--muted)}

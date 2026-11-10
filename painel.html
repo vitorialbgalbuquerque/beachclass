@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=32">
+<link rel="stylesheet" href="style.css?v=33">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -20,8 +20,8 @@
 const {Data,C,FLATS,FIDS,DAY,MESES,MS,esc,brl,T,iso,todayIso,dm,dmy,nightsBetween,numIn,monthShift,uuid,holidayAt,holidaysIn,holidaySuggestions,HTYPE,holidaySuggestionsYear,longWeekends}=BC;
 const $=s=>document.querySelector(s);
 const CATS=['Condomínio','Limpeza','Energia','Água','Internet','Manutenção','Enxoval e lavanderia','Reposição','IPTU','Outros'];
-const S={flats:{},rates:[],bookings:[],expenses:[]};
-let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',ratesYear=+todayIso().slice(0,4),ratesFlat='',msgBk='',msgKey='conf',mTxt=null,F=null,E=null,msg='';
+const S={flats:{},rates:[],bookings:[],expenses:[],reviews:[],reviewsOk:true};
+let me=null,tab='cal',calMonth=todayIso().slice(0,7),finMonth=todayIso().slice(0,7),resFilter='next',ratesYear=+todayIso().slice(0,4),ratesFlat='',msgBk='',msgKey='conf',mTxt=null,rvForm={guest:'',stars:5,text:'',stay:'',flat:'summer'},F=null,E=null,msg='';
 
 const ICON={
  cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
@@ -33,9 +33,10 @@ const ICON={
  in:'<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>',
  cash:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>',
  msg:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+ rev:'<svg viewBox="0 0 24 24"><path d="M12 3l2.800 5.700 6.200.9-4.500 4.400 1 6.200L12 17.300 6.500 20.200l1-6.200L3 9.600l6.200-.9z"/></svg>',
  up:'<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
  down:'<svg viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8M15 17h6v-6"/></svg>'};
-const TABS=[['cal','Calendário'],['res','Reservas'],['rates','Diárias'],['fin','Finanças'],['msg','Mensagens'],['site','Site dos hóspedes']];
+const TABS=[['cal','Calendário'],['res','Reservas'],['rates','Diárias'],['fin','Finanças'],['msg','Mensagens'],['rev','Avaliações'],['site','Site dos hóspedes']];
 
 /* ---------- regras de preço ---------- */
 const flatCfg=id=>{const f=S.flats.find?S.flats.find(x=>x.id===id):null;return {base:f?.base??null,base_we:f?.base_we??null,cleaning:f?.cleaning??null}};
@@ -80,7 +81,7 @@ function render(){
   const app=$('#app');
   if(me===false){app.innerHTML=loginHtml();return}
   if(!me){app.innerHTML='';return}
-  const v={cal:vCal,res:vRes,rates:vRates,fin:vFin,msg:vMsg,site:vSite}[tab]();
+  const v={cal:vCal,res:vRes,rates:vRates,fin:vFin,msg:vMsg,rev:vRev,site:vSite}[tab]();
   app.innerHTML=shell(...v);
   if(F)sheet(true);
 }
@@ -270,6 +271,30 @@ function vMsg(){
   return ['Mensagens','','',h];
 }
 
+/* ---------- avaliações ---------- */
+const RVSQL=`create table if not exists reviews (id uuid primary key default gen_random_uuid(), flat text, guest text, stars int check (stars between 1 and 5), text text, stay text, published boolean not null default true, created_at timestamptz default now());
+alter table reviews enable row level security;
+drop policy if exists "equipe reviews" on reviews;
+create policy "equipe reviews" on reviews for all to authenticated using (true) with check (true);
+create or replace function public.public_reviews() returns table (id uuid, flat text, guest text, stars int, text text, stay text) language sql security definer set search_path = public as $$ select id, flat, guest, stars, text, stay from reviews where published order by created_at desc; $$;
+revoke all on function public.public_reviews() from public;
+grant execute on function public.public_reviews() to anon, authenticated;`;
+const starsTxt=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+function vRev(){
+  if(!S.reviewsOk)return ['Avaliações','','',`<div class="rs"><div class="card"><div class="rsh"><span class="n">!</span><div><h2>Falta um passo, uma vez só</h2><p>Para guardar as avaliações, é preciso criar uma tabela no Supabase. Peça ajuda a quem configurou o site: é só colar o texto abaixo em Supabase, SQL Editor, e clicar em Run.</p></div></div><textarea id="rvsql" readonly rows="8" style="width:100%;font-size:13px;border:1px solid var(--line);border-radius:12px;padding:10px">${esc(RVSQL)}</textarea><div class="mact"><button class="btn primary" data-act="rvcopysql">Copiar texto</button></div></div></div>`];
+  const f=rvForm,list=S.reviews.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  let h=`<div class="rs"><div class="card"><div class="rsh"><span class="n">1</span><div><h2>Nova avaliação</h2><p>Só cadastre avaliações reais, com a autorização do hóspede. Elas aparecem na página do site.</p></div></div>
+  <label>Nome do hóspede (pode ser só o primeiro nome)<input id="rv-guest" value="${esc(f.guest)}" placeholder="Ex.: Marina"></label>
+  <label style="margin-top:12px">Quantas estrelas<div class="mk" style="grid-template-columns:repeat(5,1fr)">${[1,2,3,4,5].map(n=>`<button data-rvstar="${n}" aria-pressed="${f.stars===n}">${n} ★</button>`).join('')}</div></label>
+  <label style="margin-top:12px">O que o hóspede escreveu<textarea id="rv-text" rows="5" placeholder="Cole aqui o texto da avaliação">${esc(f.text)}</textarea></label>
+  <label style="margin-top:12px">Quando se hospedou<input id="rv-stay" value="${esc(f.stay)}" placeholder="Ex.: Outubro de 2026"></label>
+  ${FIDS.length>1?`<label style="margin-top:12px">Flat<select id="rv-flat">${FIDS.map(x=>`<option value="${x}"${f.flat===x?' selected':''}>${FLATS[x].name}</option>`).join('')}</select></label>`:''}
+  <div class="mact"><button class="btn primary" data-act="rvsave">Publicar avaliação</button></div></div>
+  <div class="card"><div class="rsh"><span class="n">2</span><div><h2>Avaliações cadastradas</h2><p>${list.length?'Use "Esconder" para tirar do site sem apagar.':'Ainda não há avaliações. A seção só aparece no site depois da primeira.'}</p></div></div>
+  ${list.map(r=>`<div class="rbox"><div><b>${esc(r.guest||'Hóspede')}</b> · <span style="color:var(--sand)">${starsTxt(r.stars||5)}</span>${r.stay?` · ${esc(r.stay)}`:''}<br><span class="muted">${esc(FLATS[r.flat]?.name||'')} ${r.published===false?'· escondida do site':'· aparece no site'}</span></div><div style="white-space:pre-wrap">${esc(r.text||'')}</div><div class="mact" style="margin:0"><button class="btn" data-rvtog="${r.id}">${r.published===false?'Mostrar no site':'Esconder do site'}</button><button class="btn danger" data-rvdel="${r.id}">Remover</button></div></div>`).join('')}</div></div>`;
+  return ['Avaliações','','',h];
+}
+
 function vSite(){
   const url=location.href.replace(/painel\.html.*$/,'');
   return ['Site dos hóspedes','','',`<div class="grid"><div class="card c7"><h2>Página pública</h2><div class="sub">Mostra só os dias livres e ocupados dos dois flats. O hóspede escolhe as datas e chama no WhatsApp.</div><div class="linkbox" id="sitelink">${esc(url)}</div><div class="row" style="margin-top:12px"><button class="btn primary" data-act="copysite">Copiar link</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a></div></div>
@@ -350,6 +375,9 @@ document.addEventListener('click',async ev=>{
   if(el=t.closest('[data-addrate]')){const se=el.dataset.addrate==='season';await put('rates',{id:uuid(),flat:el.dataset.flat,type:el.dataset.addrate,name:'',from_date:se?'2000-12-15':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),to_date:se?'2000-02-28':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),price:null,price_we:null});return}
   if(el=t.closest('[data-delrate]')){await drop('rates',el.dataset.delrate);return}
   if(el=t.closest('[data-delpay]')){F.payments.splice(+el.dataset.delpay,1);sheet();return}
+  if(el=t.closest('[data-rvstar]')){rvForm.stars=+el.dataset.rvstar;render();return}
+  if(el=t.closest('[data-rvtog]')){const r=S.reviews.find(x=>x.id===el.dataset.rvtog);if(r)await put('reviews',{...r,published:r.published===false});return}
+  if(el=t.closest('[data-rvdel]')){await drop('reviews',el.dataset.rvdel);return}
   if(el=t.closest('[data-mkey]')){msgKey=el.dataset.mkey;mTxt=null;render();return}
   if(el=t.closest('[data-fpill]')){ratesFlat=el.dataset.fpill;render();return}
   if(el=t.closest('[data-ypill]')){ratesYear=+el.dataset.ypill;render();return}
@@ -369,6 +397,9 @@ document.addEventListener('click',async ev=>{
   else if(a==='expdelask'){const d=$('#e-desc').value;E.descr=d;E.confirmDelete=true;expSheet(E)}
   else if(a==='expdelyes'){if(await drop('expenses',E.id))closeAll()}
   else if(a==='logout'){await Data.signOut();me=Data.live?false:me;render()}
+  else if(a==='rvcopysql'){const ta=$('#rvsql');try{await navigator.clipboard.writeText(ta.value);el.textContent='Copiado!'}catch(e){ta.select()}}
+  else if(a==='rvsave'){const f=rvForm;if(!f.guest.trim()||!f.text.trim()){msg='Preencha o nome do hóspede e o texto da avaliação.';render();return}
+    if(await put('reviews',{id:uuid(),flat:f.flat,guest:f.guest.trim(),stars:f.stars,text:f.text.trim(),stay:f.stay.trim(),published:true,created_at:new Date().toISOString()})){rvForm={guest:'',stars:5,text:'',stay:'',flat:f.flat};msg='Avaliação publicada.';render()}}
   else if(a==='mreset'){mTxt=null;render()}
   else if(a==='mcopy'||a==='mwa'){const ta=$('#msgtext'),text=ta.value,b=S.bookings.find(x=>x.id===msgBk);
     if(a==='mwa'){let ph=((b&&b.phone)||'').replace(/\D/g,'');if(ph.length<=11)ph='55'+ph;window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(text),'_blank','noopener');return}
@@ -378,7 +409,7 @@ document.addEventListener('click',async ev=>{
   else if(a==='copyquote'||a==='copysite'){const src=a==='copysite'?$('#sitelink'):$('#f-msg'),text=a==='copysite'?src.textContent:src.value;
     try{await navigator.clipboard.writeText(text);el.textContent='Copiado'}catch(e){if(src.select)src.select();else{const r=document.createRange();r.selectNodeContents(src);const s=getSelection();s.removeAllRanges();s.addRange(r)}el.textContent='Selecionado, copie'}}
 });
-document.addEventListener('input',ev=>{const t=ev.target;if(t.id==='msgtext'){mTxt=t.value;return}if(!F||!t.id||!t.id.startsWith('f-'))return;
+document.addEventListener('input',ev=>{const t=ev.target;if(t.id==='msgtext'){mTxt=t.value;return}if(t.id==='rv-guest'){rvForm.guest=t.value;return}if(t.id==='rv-text'){rvForm.text=t.value;return}if(t.id==='rv-stay'){rvForm.stay=t.value;return}if(!F||!t.id||!t.id.startsWith('f-'))return;
   const map={'f-guest':'guest','f-phone':'phone','f-guests':'guests','f-adjust':'adjust','f-notes':'notes'};if(map[t.id]){F[map[t.id]]=t.value;if(t.id==='f-adjust'||t.id==='f-guest')live_()}});
 document.addEventListener('change',async ev=>{
   const t=ev.target;
@@ -386,6 +417,7 @@ document.addEventListener('change',async ev=>{
     if(t.id==='f-ci'){F.checkin=t.value;if(F.checkout<=F.checkin)F.checkout=iso(T(F.checkin)+DAY);sheet();return}if(t.id==='f-co'){F.checkout=t.value;live_();return}}
   if(F&&t.dataset.pay!==undefined){F.payments[+t.dataset.pay][t.dataset.f]=t.value;live_();return}
   if(t.dataset.flatfield){const fid=t.dataset.flat,cur=S.flats.find(x=>x.id===fid)||{id:fid,name:FLATS[fid].name,loc:FLATS[fid].loc};await put('flats',{...cur,[t.dataset.flatfield]:numIn(t.value)});return}
+  if(t.id==='rv-flat'){rvForm.flat=t.value;return}
   if(t.dataset.msgbk!==undefined){msgBk=t.value;mTxt=null;render();return}
   if(t.dataset.minfo){const I=minfoLoad();I[t.dataset.minfo]=t.value;minfoSave(I);mTxt=null;setTimeout(render,0);return}
   if(t.dataset.lwprice){const [a,b,n]=t.dataset.lwprice.split('|'),fid=t.dataset.flat,v=numIn(t.value),r=lwRow(fid,{from:a,to:b});if(r)await put('rates',{...r,price:v});else if(v!=null)await put('rates',{id:uuid(),flat:fid,type:'especial',name:n,from_date:a,to_date:b,price:v,price_we:null});return}
