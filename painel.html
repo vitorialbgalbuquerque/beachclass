@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=39">
+<link rel="stylesheet" href="style.css?v=40">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -213,7 +213,7 @@ function vFin(){
 
 /* ---------- site ---------- */
 /* ---------- mensagens prontas ---------- */
-const MINFO=[['assin','Assinatura','Beach Class'],['end','Endereço do flat','Beach Class Summer Residence, R. Frei Damião, s/n, Cupe, Ipojuca (PE)'],['hin','Horário de entrada (check-in)','14h'],['hout','Horário de saída (check-out)','12h (meio-dia)'],['acesso','Como entrar no flat (chave, portaria, código)',''],['wifi','Wi-Fi (nome e senha)','Rede: Flat 01 | Senha: 03152203411'],['pix','Chave Pix',''],['aval','Link para avaliação (Google, opcional)','']];
+const MINFO=[['assin','Assinatura','Beach Class'],['end','Endereço do flat','Beach Class Summer Residence, R. Frei Damião, s/n, Cupe, Ipojuca (PE)'],['hin','Horário de entrada (check-in)','14h'],['hout','Horário de saída (check-out)','12h (meio-dia)'],['acesso','Como entrar no flat','A porta do flat é com senha. Enviaremos a senha da porta por aqui.'],['wifi','Wi-Fi (nome e senha)','Rede: Flat 01 | Senha: 03152203411'],['pix','Chave Pix',''],['aval','Link para avaliação (Google, opcional)','']];
 const MKINDS=[['conf','Reserva confirmada','Ao confirmar a reserva'],['docs','Pedir documentos','Antes da chegada'],['boas','Boas-vindas e informações','No dia da chegada'],['regras','Regras de convivência','No dia da chegada'],['saida','Saída e agradecimento','No dia da saída']];
 const minfoLoad=()=>{let o={};try{o=JSON.parse(localStorage.getItem('bc01_msginfo')||'{}')}catch(e){}MINFO.forEach(([k,,d])=>{if(o[k]==null)o[k]=d});return o};
 const minfoSave=o=>{try{localStorage.setItem('bc01_msginfo',JSON.stringify(o))}catch(e){}};
@@ -257,7 +257,7 @@ function msgBuild(b,kind,I){
      +`🏠 NO FLAT\nAo sair, confiram se portas e janelas estão trancadas e se o ar-condicionado está desligado. O condomínio não se responsabiliza por danos ou furtos em unidades ou áreas comuns. Lembrando que não aceitamos animais de estimação.\n\n`
      +`⚠️ O condomínio é residencial (não é hotel). O descumprimento das regras pode gerar advertência e multa de R$ 500,00 por infração, e danos às áreas comuns são de responsabilidade do hóspede. Ao se hospedar, vocês declaram estar de acordo com essas normas.\n\nQualquer dúvida, é só chamar por aqui. Boa estadia!`+ass}
   else if(kind==='saida'){
-    t=`Bom dia, ${nome}! Hoje é o dia da saída, até as ${f('hout','horário de saída')}. 😊\n\nAntes de sair, por favor:\n• confira se não ficou nenhum pertence;\n• desligue o ar-condicionado, a TV e as luzes;\n• feche as janelas e a porta;\n• ${f('acesso','como devolver a chave')}.\n\nMuito obrigada por escolherem o ${fl}. Foi um prazer receber vocês! 💙\n\n${(I.aval||'').trim()?`Se puderem, deixem uma avaliação da estadia: ${I.aval.trim()}\n\n`:''}Quando quiserem voltar, é só chamar por aqui. Acompanhem também o nosso Instagram, @beachclass01.`+ass}
+    t=`Bom dia, ${nome}! Hoje é o dia da saída, até as ${f('hout','horário de saída')}. 😊\n\nAntes de sair, por favor:\n• confira se não ficou nenhum pertence;\n• desligue o ar-condicionado, a TV e as luzes;\n• feche as janelas e a porta.\n\nMuito obrigada por escolherem o ${fl}. Foi um prazer receber vocês! 💙\n\n${(I.aval||'').trim()?`Se puderem, deixem uma avaliação da estadia: ${I.aval.trim()}\n\n`:''}Quando quiserem voltar, é só chamar por aqui. Acompanhem também o nosso Instagram, @beachclass01.`+ass}
   else{
     t=`Olá, ${nome}! Muito obrigada por escolherem o ${fl}. Foi um prazer receber vocês! 💙\n\n${(I.aval||'').trim()?`Se puderem, deixem uma avaliação da estadia: ${I.aval.trim()}\n\n`:''}Quando quiserem voltar, é só chamar por aqui. Acompanhem também o nosso Instagram, @beachclass01.`+ass}
   return {t,miss:[...new Set(miss)]};
