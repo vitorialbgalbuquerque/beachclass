@@ -469,3 +469,17 @@ details.more summary::after{content:" ▾";color:var(--muted)}
 .rv{flex:0 0 84%;max-width:320px;scroll-snap-align:start;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .rv .stt{color:var(--sand);letter-spacing:2px}.rv blockquote{margin:0;font-size:15px;line-height:1.55}
 .rv figcaption{display:flex;flex-direction:column;gap:2px;font-size:14px}.rv figcaption span{color:var(--muted)}
+
+.sh-b .stp{display:flex;align-items:center;gap:10px;margin:20px 0 10px;font-size:17px}
+.sh-b .stp:first-child{margin-top:4px}
+.stp .n{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none}
+.sh-b label{display:flex;flex-direction:column;gap:6px;font-size:15px;font-weight:600}
+.sh-b input,.sh-b select,.sh-b textarea{min-height:48px;font-size:17px}
+.sh-b .mk button{min-height:52px;text-align:center}
+.tot{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:2px}
+.tot span{color:var(--muted);font-size:14px;font-weight:600}.tot b{font-size:30px;color:var(--accent)}.tot small{color:var(--muted)}
+.sh-b .prenote{margin-top:14px}
+
+.mk1{grid-template-columns:1fr}
+.mk1 button{display:flex;flex-direction:column;gap:2px;padding:14px 16px}
+.mk1 button small{font-weight:500;opacity:.75;font-size:13.5px}

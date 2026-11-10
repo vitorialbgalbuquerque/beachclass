@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1B8F94">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=37">
+<link rel="stylesheet" href="style.css?v=39">
 </head><body>
 <div id="app"></div><div id="modal"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -214,7 +214,7 @@ function vFin(){
 /* ---------- site ---------- */
 /* ---------- mensagens prontas ---------- */
 const MINFO=[['assin','Assinatura','Beach Class'],['end','Endereço do flat','Beach Class Summer Residence, R. Frei Damião, s/n, Cupe, Ipojuca (PE)'],['hin','Horário de entrada (check-in)','14h'],['hout','Horário de saída (check-out)','12h (meio-dia)'],['acesso','Como entrar no flat (chave, portaria, código)',''],['wifi','Wi-Fi (nome e senha)','Rede: Flat 01 | Senha: 03152203411'],['pix','Chave Pix',''],['aval','Link para avaliação (Google, opcional)','']];
-const MKINDS=[['conf','Confirmação da reserva'],['pag','Pagamento e saldo'],['antes','Antes da chegada'],['boas','Boas-vindas e informações do flat'],['docs','Pedir documentos'],['regras','Regras de convivência'],['saida','Dia da saída'],['obg','Agradecimento']];
+const MKINDS=[['conf','Reserva confirmada','Ao confirmar a reserva'],['docs','Pedir documentos','Antes da chegada'],['boas','Boas-vindas e informações','No dia da chegada'],['regras','Regras de convivência','No dia da chegada'],['saida','Saída e agradecimento','No dia da saída']];
 const minfoLoad=()=>{let o={};try{o=JSON.parse(localStorage.getItem('bc01_msginfo')||'{}')}catch(e){}MINFO.forEach(([k,,d])=>{if(o[k]==null)o[k]=d});return o};
 const minfoSave=o=>{try{localStorage.setItem('bc01_msginfo',JSON.stringify(o))}catch(e){}};
 const wdn=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
@@ -236,7 +236,7 @@ function msgBuild(b,kind,I){
     t=`Olá, ${nome}! Falta pouco para a sua estadia no ${fl}. 🌴 Seguem as informações:\n\n📍 Endereço: ${f('end','endereço')}\n📅 Entrada: ${dlong(b.checkin)}, a partir das ${f('hin','horário de entrada')}\n📅 Saída: ${dlong(b.checkout)}, até as ${f('hout','horário de saída')}\n🔑 ${f('acesso','como entrar no flat')}\n\nO condomínio tem recepção 24 horas e o estacionamento é gratuito. Lembrando que não aceitamos animais de estimação.\n\nAvise por aqui o horário aproximado da chegada. Boa viagem!`+ass}
   else if(kind==='boas'){
     t=`Bem-vindos ao ${fl}, ${nome}! 🌞 Esperamos que tenham feito uma ótima viagem. Seguem as informações para a estadia de vocês:\n\n`
-     +`📶 Wi-Fi: ${f('wifi','Wi-Fi')}\n🕚 Saída: ${dlong(b.checkout)}, até as ${f('hout','horário de saída')}\n\n`
+     +`📍 Endereço: ${f('end','endereço')}\n📅 Entrada: ${dlong(b.checkin)}, a partir das ${f('hin','horário de entrada')}\n📅 Saída: ${dlong(b.checkout)}, até as ${f('hout','horário de saída')}\n🔑 ${f('acesso','como entrar no flat')}\n📶 Wi-Fi: ${f('wifi','Wi-Fi')}\n\n`
      +`🏠 NO FLAT\n• Quarto 1: cama de casal e cama auxiliar\n• Quarto 2: duas camas de solteiro e cama auxiliar\n• Sala: sofá-cama\n• Todos os ambientes climatizados\n• Cozinha equipada, com cafeteira, micro-ondas, sanduicheira e airfryer\n• Purificador de água\n• Rouparia (roupas de cama e banho)\n• Varanda com mesa, de frente para o jardim\n• TV e Wi-Fi grátis\n• Estacionamento grátis\n\n`
      +`🌴 NO CONDOMÍNIO\n• Recepção e conveniência 24 horas\n• Piscinas adulto e infantil\n• Playground e brinquedoteca\n• Academia, quadras esportivas e coworking\n• Lavanderia\n• Carregador para carros elétricos\n• Restaurante Umbu Cajá, com café da manhã em buffet livre (valores pagos direto ao restaurante: adultos R$ 45; R$ 32 reservando direto com o restaurante com 24 horas de antecedência; crianças de 6 a 10 anos R$ 20; até 5 anos cortesia)\n\n`
      +`📍 A Praia do Cupe fica a poucos minutos a pé.\n\nLembrando que não aceitamos animais de estimação. Qualquer coisa que precisarem, é só chamar por aqui. Aproveitem!`+ass}
@@ -257,7 +257,7 @@ function msgBuild(b,kind,I){
      +`🏠 NO FLAT\nAo sair, confiram se portas e janelas estão trancadas e se o ar-condicionado está desligado. O condomínio não se responsabiliza por danos ou furtos em unidades ou áreas comuns. Lembrando que não aceitamos animais de estimação.\n\n`
      +`⚠️ O condomínio é residencial (não é hotel). O descumprimento das regras pode gerar advertência e multa de R$ 500,00 por infração, e danos às áreas comuns são de responsabilidade do hóspede. Ao se hospedar, vocês declaram estar de acordo com essas normas.\n\nQualquer dúvida, é só chamar por aqui. Boa estadia!`+ass}
   else if(kind==='saida'){
-    t=`Bom dia, ${nome}! Hoje é o dia da saída, até as ${f('hout','horário de saída')}. 😊\n\nAntes de sair, por favor:\n• confira se não ficou nenhum pertence;\n• desligue o ar-condicionado, a TV e as luzes;\n• feche as janelas e a porta;\n• ${f('acesso','como devolver a chave')}.\n\nFoi um prazer receber vocês!`+ass}
+    t=`Bom dia, ${nome}! Hoje é o dia da saída, até as ${f('hout','horário de saída')}. 😊\n\nAntes de sair, por favor:\n• confira se não ficou nenhum pertence;\n• desligue o ar-condicionado, a TV e as luzes;\n• feche as janelas e a porta;\n• ${f('acesso','como devolver a chave')}.\n\nMuito obrigada por escolherem o ${fl}. Foi um prazer receber vocês! 💙\n\n${(I.aval||'').trim()?`Se puderem, deixem uma avaliação da estadia: ${I.aval.trim()}\n\n`:''}Quando quiserem voltar, é só chamar por aqui. Acompanhem também o nosso Instagram, @beachclass01.`+ass}
   else{
     t=`Olá, ${nome}! Muito obrigada por escolherem o ${fl}. Foi um prazer receber vocês! 💙\n\n${(I.aval||'').trim()?`Se puderem, deixem uma avaliação da estadia: ${I.aval.trim()}\n\n`:''}Quando quiserem voltar, é só chamar por aqui. Acompanhem também o nosso Instagram, @beachclass01.`+ass}
   return {t,miss:[...new Set(miss)]};
@@ -269,17 +269,17 @@ function vMsg(){
   if(!b)return ['Mensagens','','','<div class="card"><div class="empty">Ainda não há reservas para enviar mensagem. Cadastre uma reserva e volte aqui.</div></div>'];
   const r=msgBuild(b,msgKey,I);if(mTxt==null)mTxt=r.t;
   const ph=(b.phone||'').replace(/\D/g,'');
-  h+=`<div class="rs"><div class="card"><div class="rsh"><span class="n">1</span><div><h2>Escolha a reserva</h2></div></div>
-  <label>Hóspede<select data-msgbk>${books.map(x=>`<option value="${x.id}"${x.id===msgBk?' selected':''}>${esc(x.guest||'Sem nome')} · ${FLATS[x.flat].name.split(' ')[0]} · ${dm(x.checkin)} a ${dm(x.checkout)}</option>`).join('')}</select></label></div>
-  <div class="card"><div class="rsh"><span class="n">2</span><div><h2>Escolha a mensagem</h2></div></div>
-  <div class="mk">${MKINDS.map(([k,l])=>`<button data-mkey="${k}" aria-pressed="${k===msgKey}">${l}</button>`).join('')}</div></div>
-  <div class="card"><div class="rsh"><span class="n">3</span><div><h2>Confira e envie</h2><p>Você pode mexer no texto antes de enviar.</p></div></div>
-  ${r.miss.length?`<div class="warnbox" style="margin-bottom:10px">Falta preencher em "Dados das mensagens" (mais abaixo): ${r.miss.join(', ')}.</div>`:''}
+  h+=`<div class="rs"><div class="card"><div class="rsh"><span class="n">1</span><div><h2>Para quem?</h2></div></div>
+  <label><select data-msgbk>${books.map(x=>`<option value="${x.id}"${x.id===msgBk?' selected':''}>${esc(x.guest||'Sem nome')} · ${FLATS[x.flat].name.split(' ')[0]} · ${dm(x.checkin)} a ${dm(x.checkout)}</option>`).join('')}</select></label></div>
+  <div class="card"><div class="rsh"><span class="n">2</span><div><h2>Qual mensagem?</h2></div></div>
+  <div class="mk mk1">${MKINDS.map(([k,l,hint])=>`<button data-mkey="${k}" aria-pressed="${k===msgKey}"><b>${l}</b><small>${hint}</small></button>`).join('')}</div></div>
+  <div class="card"><div class="rsh"><span class="n">3</span><div><h2>Enviar</h2><p>Confira o texto. Se quiser, pode mexer nele.</p></div></div>
+  ${r.miss.length?`<div class="warnbox" style="margin-bottom:10px">Falta preencher em "Dados das mensagens" (no fim da página): ${r.miss.join(', ')}.</div>`:''}
   <textarea id="msgtext" rows="14">${esc(mTxt)}</textarea>
-  <div class="mact"><button class="btn primary" data-act="mcopy">Copiar mensagem</button><button class="btn" data-act="mwa"${ph?'':' disabled'}>Abrir no WhatsApp</button><button class="btn" data-act="mreset">Voltar ao texto original</button></div>
-  ${ph?'':'<p class="muted" style="margin:8px 0 0">Esta reserva não tem telefone. Cadastre o telefone na reserva para abrir direto no WhatsApp.</p>'}</div>
-  <div class="card"><div class="rsh"><span class="n">4</span><div><h2>Dados das mensagens</h2><p>Preencha uma vez. Ficam salvos neste aparelho e entram sozinhos nos textos.</p></div></div>
-  ${MINFO.map(([k,l])=>`<label style="margin-bottom:12px">${l}<input data-minfo="${k}" value="${esc(I[k]||'')}"></label>`).join('')}</div></div>`;
+  <div class="mact"><button class="btn primary" data-act="mwa"${ph?'':' disabled'} style="flex:1;justify-content:center">Enviar pelo WhatsApp</button><button class="btn" data-act="mcopy">Copiar texto</button></div>
+  ${ph?'':'<p class="muted" style="margin:8px 0 0">Esta reserva não tem telefone. Cadastre o telefone na reserva ou use "Copiar texto".</p>'}</div>
+  <details class="more"><summary>Dados que entram nas mensagens (preencher uma vez)</summary><div style="padding-top:12px">
+  ${MINFO.map(([k,l])=>`<label style="margin-bottom:12px">${l}<input data-minfo="${k}" value="${esc(I[k]||'')}"></label>`).join('')}</div></details></div>`;
   return ['Mensagens','','',h];
 }
 
@@ -328,26 +328,34 @@ function sheet(keep){
   const m=$('#modal');if(!F){m.innerHTML='';document.body.classList.remove('modal-open');return}
   if(keep&&m.contains(document.activeElement))return;
   const bl=F.kind==='bloqueio',n=nightsBetween(F.checkin,F.checkout),q=calcF(),sal=q.total-F.payments.reduce((s,p)=>s+(Number(p.amount)||0),0);
-  m.innerHTML=`<div class="scrim" data-scrim><div class="sheet bk" role="dialog"><div class="sh-h"><h2>${bl?(F.id?'Editar bloqueio':'Novo bloqueio'):(F.id?'Editar reserva':'Nova reserva')}</h2><button class="btn" data-act="closesheet">Fechar ✕</button></div><div class="sh-b">
-  <div class="grid2 stack"><label>Flat<select id="f-flat">${FIDS.map(f=>`<option value="${f}" ${F.flat===f?'selected':''}>${FLATS[f].name}</option>`).join('')}</select></label>
-  ${bl?`<label>Motivo<input id="f-guest" value="${esc(F.guest)}" placeholder="Uso dos donos"></label>`:(F.id?`<label>Situação<select id="f-status"><option value="confirmada" ${F.status==='confirmada'?'selected':''}>Confirmada</option><option value="pre" ${F.status==='pre'?'selected':''}>Pré-reserva</option><option value="cancelada" ${F.status==='cancelada'?'selected':''}>Cancelada</option></select></label>`:`<div class="prenote"><b>Será salva como pré-reserva.</b> Depois que o sinal for pago, abra a reserva e mude a situação para Confirmada.</div>`)}</div>
-  <div class="grid2"><label>Entrada<input type="date" id="f-ci" value="${F.checkin}"></label><label>Saída<input type="date" id="f-co" value="${F.checkout}"></label></div>
-  <div class="muted" style="margin-top:6px;font-size:13px" id="f-nights">${n} noite${n===1?'':'s'}</div><div id="f-warn">${warns()}</div>
-  ${bl?`<label style="margin-top:10px">Observação<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>`:`
-  <div class="grid2"><label>Hóspede<input id="f-guest" value="${esc(F.guest)}" placeholder="Nome"></label><label>WhatsApp<input id="f-phone" inputmode="tel" value="${esc(F.phone||'')}" placeholder="81 90000-0000"></label></div>
-  <label style="margin-top:10px">Quantas pessoas (até 8)<input id="f-guests" inputmode="numeric" value="${esc(F.guests)}"></label>
-  <div class="box"><div class="h3">Valores</div><div class="quote" id="f-quote">${quoteHtml(q)}</div></div>
-  <details class="more"><summary>Pagamentos, desconto e observações</summary>
-  <label style="margin-top:12px">Desconto ou acréscimo (R$, negativo = desconto)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label>
-  <div class="box"><div class="row sb"><div class="h3" style="margin:0">Pagamentos</div><button class="btn small" data-act="addpay">+ Pagamento</button></div><div id="f-pays">${paysHtml()}</div><div class="row sb" style="margin-top:10px"><span class="muted">Saldo a receber</span><b id="f-saldo" class="${sal>0.005?'neg':'pos'}">${brl(sal)}</b></div></div>
-  <label style="margin-top:12px">Observações<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>
-  <div class="box"><div class="row sb"><div class="h3" style="margin:0">Mensagem para o hóspede</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div></details>`}</div>
-  <div class="sh-f"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">Salvar</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
+  const step=(k,t)=>`<div class="stp"><span class="n">${k}</span><b>${t}</b></div>`;
+  const flatBtns=`<div class="mk">${FIDS.map(f=>`<button type="button" data-bkflat="${f}" aria-pressed="${F.flat===f}">${FLATS[f].name}</button>`).join('')}</div>`;
+  const dates=`<div class="grid2"><label>Entrada<input type="date" id="f-ci" value="${F.checkin}"></label><label>Saída<input type="date" id="f-co" value="${F.checkout}"></label></div><div class="muted" style="margin-top:6px" id="f-nights">${n} noite${n===1?'':'s'}</div><div id="f-warn">${warns()}</div>`;
+  const title=bl?(F.id?'Editar bloqueio':'Novo bloqueio'):(F.id?'Editar reserva':'Nova reserva');
+  let b=step(1,'Qual flat?')+flatBtns+step(2,bl?'Quais dias?':'Quando?')+dates;
+  if(bl)b+=step(3,'Motivo (opcional)')+`<label><input id="f-guest" value="${esc(F.guest)}" placeholder="Uso dos donos"></label><label style="margin-top:10px">Observação<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>`;
+  else{
+    b+=step(3,'Quem vai se hospedar?')+`<label>Nome<input id="f-guest" value="${esc(F.guest)}" placeholder="Nome do hóspede"></label>
+    <label style="margin-top:10px">WhatsApp<input id="f-phone" inputmode="tel" value="${esc(F.phone||'')}" placeholder="81 90000-0000"></label>
+    <label style="margin-top:10px">Quantas pessoas (até 8)<input id="f-guests" inputmode="numeric" value="${esc(F.guests)}"></label>`;
+    b+=`<div class="tot"><span>Total da estadia</span><b id="f-total">${brl(q.total)}</b><small id="f-totsub">${n} noite${n===1?'':'s'}, com a limpeza</small></div>`;
+    if(F.id)b+=step(4,'Situação da reserva')+`<div class="mk">${[['pre','Pré-reserva'],['confirmada','Confirmada'],['cancelada','Cancelada']].map(([k,l])=>`<button type="button" data-bkstatus="${k}" aria-pressed="${F.status===k}">${l}</button>`).join('')}</div>`;
+    else b+=`<div class="prenote"><b>Será salva como pré-reserva.</b> Quando o sinal for pago, abra a reserva e mude para Confirmada.</div>`;
+    b+=`<details class="more"${F.id?' open':''}><summary>Mais opções: pagamentos, desconto, observações</summary>
+    <div class="box"><div class="h3">Como o total foi calculado</div><div class="quote" id="f-quote">${quoteHtml(q)}</div></div>
+    <label style="margin-top:12px">Desconto ou acréscimo (R$, negativo = desconto)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label>
+    <div class="box"><div class="row sb"><div class="h3" style="margin:0">Pagamentos</div><button class="btn small" data-act="addpay">+ Pagamento</button></div><div id="f-pays">${paysHtml()}</div><div class="row sb" style="margin-top:10px"><span class="muted">Saldo a receber</span><b id="f-saldo" class="${sal>0.005?'neg':'pos'}">${brl(sal)}</b></div></div>
+    <label style="margin-top:12px">Observações<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>
+    <div class="box"><div class="row sb"><div class="h3" style="margin:0">Orçamento para enviar</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div></details>`;
+  }
+  m.innerHTML=`<div class="scrim" data-scrim><div class="sheet bk" role="dialog"><div class="sh-h"><h2>${title}</h2><button class="btn" data-act="closesheet">Fechar ✕</button></div><div class="sh-b">${b}</div>
+  <div class="sh-f"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">${bl?'Salvar bloqueio':(F.id?'Salvar':'Salvar pré-reserva')}</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
   document.body.classList.add('modal-open');
 }
 function live_(){
   const q=calcF(),n=nightsBetween(F.checkin,F.checkout),set=(i,h)=>{const e=$(i);if(e)e.innerHTML=h};
   set('#f-nights',`${n} noite${n===1?'':'s'}`);set('#f-warn',warns());
+  {const e=$('#f-total');if(e){e.textContent=brl(q.total);const s=$('#f-totsub');if(s)s.textContent=n+' noite'+(n===1?'':'s')+(q.missing?` · faltam preços em ${q.missing} noite${q.missing>1?'s':''} (veja a aba Diárias)`:', com a limpeza')}}
   if(F.kind!=='bloqueio'){set('#f-quote',quoteHtml(q));const sal=q.total-F.payments.reduce((s,p)=>s+(Number(p.amount)||0),0),e=$('#f-saldo');if(e){e.textContent=brl(sal);e.className=sal>0.005?'neg':'pos'}const t=$('#f-msg');if(t)t.value=msgText()}
 }
 async function saveSheet(){
@@ -387,6 +395,8 @@ document.addEventListener('click',async ev=>{
   if(el=t.closest('[data-addrate]')){const se=el.dataset.addrate==='season';await put('rates',{id:uuid(),flat:el.dataset.flat,type:el.dataset.addrate,name:'',from_date:se?'2000-12-15':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),to_date:se?'2000-02-28':(ratesYear===+todayIso().slice(0,4)?todayIso():ratesYear+'-01-01'),price:null,price_we:null});return}
   if(el=t.closest('[data-delrate]')){await drop('rates',el.dataset.delrate);return}
   if(el=t.closest('[data-delpay]')){F.payments.splice(+el.dataset.delpay,1);sheet();return}
+  if(el=t.closest('[data-bkflat]')){F.flat=el.dataset.bkflat;sheet();return}
+  if(el=t.closest('[data-bkstatus]')){F.status=el.dataset.bkstatus;sheet();return}
   if(el=t.closest('[data-rvstar]')){rvForm.stars=+el.dataset.rvstar;render();return}
   if(el=t.closest('[data-rvtog]')){const r=S.reviews.find(x=>x.id===el.dataset.rvtog);if(r)await put('reviews',{...r,published:r.published===false});return}
   if(el=t.closest('[data-rvdel]')){await drop('reviews',el.dataset.rvdel);return}
