@@ -430,3 +430,9 @@ tr:last-child td{border-bottom:0}
 .foot a{color:#fff;text-underline-offset:4px}
 html{scroll-behavior:smooth}
 .cta-bar{transition:transform .25s ease}.cta-bar.away{transform:translateY(120%)}
+
+.foot{position:relative;background:#0d1f21 url("fotos/por-do-sol.jpg") center 70%/cover no-repeat;padding:150px 20px 170px;margin-top:20px}
+.foot::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,rgba(244,244,242,0) 38%,rgba(8,20,22,.4) 55%,rgba(8,20,22,.85) 100%)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .foot::before{background:linear-gradient(180deg,var(--bg) 0%,rgba(20,23,22,0) 38%,rgba(8,20,22,.4) 55%,rgba(8,20,22,.85) 100%)}}
+.foot>*{position:relative;z-index:1;text-shadow:0 1px 12px rgba(0,0,0,.45)}
+.foot p{color:#fff}
