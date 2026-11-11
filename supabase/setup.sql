@@ -52,7 +52,7 @@ create or replace function public.availability()
 returns table (flat text, checkin date, checkout date)
 language sql security definer set search_path = public as $$
   select flat, checkin, checkout from bookings
-  where status <> 'cancelada' and checkout >= current_date - 1;
+  where status not in ('cancelada','pre') and checkout >= current_date - 1;
 $$;
 revoke all on function public.availability() from public;
 grant execute on function public.availability() to anon, authenticated;

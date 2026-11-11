@@ -72,7 +72,7 @@ const Data={
   /* Público: só flat e datas ocupadas. */
   async availability(){
     const out={summer:[],solare:[]};
-    if(!live){demoLoad().bookings.filter(b=>b.status!=='cancelada').forEach(b=>(out[b.flat]||[]).push([b.checkin,b.checkout]));return out}
+    if(!live){demoLoad().bookings.filter(b=>b.status!=='cancelada'&&b.status!=='pre').forEach(b=>(out[b.flat]||[]).push([b.checkin,b.checkout]));return out}
     const {data,error}=await sb.rpc('availability');if(error)throw error;
     data.forEach(b=>(out[b.flat]||[]).push([b.checkin,b.checkout]));return out;
   },
