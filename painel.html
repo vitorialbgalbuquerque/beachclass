@@ -314,9 +314,9 @@ function vSite(){
 }
 
 /* ---------- janela de reserva ---------- */
-function newForm(kind,flat,ci){const d=ci||todayIso();F={id:null,kind,flat:flat||'summer',guest:'',phone:'',guests:'',checkin:d,checkout:iso(T(d)+DAY*(kind==='bloqueio'?1:2)),status:kind==='bloqueio'?'confirmada':'pre',adjust:'',notes:'',payments:[],confirmDelete:false,err:''};sheet()}
-function editForm(id){const b=S.bookings.find(x=>x.id===id);if(!b)return;F={...b,adjust:b.adjust||'',guests:b.guests||'',payments:(b.payments||[]).map(p=>({...p})),confirmDelete:false,err:''};sheet()}
-const calcF=()=>{const q=quote(F.flat,F.checkin,F.checkout),adj=numIn(F.adjust)||0;return {...q,adj,total:q.rent+(q.cleaning||0)+adj}};
+function newForm(kind,flat,ci){const d=ci||todayIso();F={id:null,kind,flat:flat||'summer',guest:'',phone:'',guests:'',checkin:d,checkout:iso(T(d)+DAY*(kind==='bloqueio'?1:2)),status:kind==='bloqueio'?'confirmada':'pre',adjust:'',adjKind:'desc',notes:'',payments:[],confirmDelete:false,err:''};sheet()}
+function editForm(id){const b=S.bookings.find(x=>x.id===id);if(!b)return;F={...b,adjust:b.adjust?String(Math.abs(b.adjust)):'',adjKind:(Number(b.adjust)||0)>0?'acr':'desc',guests:b.guests||'',payments:(b.payments||[]).map(p=>({...p})),confirmDelete:false,err:''};sheet()}
+const calcF=()=>{const q=quote(F.flat,F.checkin,F.checkout),adj=Math.abs(numIn(F.adjust)||0)*(F.adjKind==='acr'?1:-1);return {...q,adj,total:q.rent+(q.cleaning||0)+adj}};
 function quoteHtml(q){let h='';q.groups.forEach(g=>{h+=`<span>${g.nights} noite${g.nights>1?'s':''} · ${esc(g.name)} · ${brl(g.price)}</span><span>${brl(g.nights*g.price)}</span>`});
   if(q.missing)h+=`<span class="neg" style="grid-column:1/-1">${q.missing} noite${q.missing>1?'s':''} sem diária definida. Preencha a aba Diárias.</span>`;
   h+=`<span>Limpeza (valor fixo)</span><span>${q.cleaning==null?'<span class="neg">definir</span>':brl(q.cleaning)}</span>`;if(q.adj)h+=`<span>Ajuste</span><span>${brl(q.adj)}</span>`;
@@ -346,7 +346,7 @@ function sheet(keep){
     else b+=`<div class="prenote"><b>Será salva como pré-reserva.</b> Quando o sinal for pago, abra a reserva e mude para Confirmada.</div>`;
     b+=`<details class="more"${F.id?' open':''}><summary>Mais opções: pagamentos, desconto, observações</summary>
     <div class="box"><div class="h3">Como o total foi calculado</div><div class="quote" id="f-quote">${quoteHtml(q)}</div></div>
-    <label style="margin-top:12px">Desconto ou acréscimo (R$, negativo = desconto)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label>
+    <div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:6px">Desconto ou acréscimo (opcional)</div><div class="mk" style="margin-bottom:8px">${[['desc','Desconto'],['acr','Acréscimo']].map(([k,l])=>`<button type="button" data-adjk="${k}" aria-pressed="${F.adjKind===k}">${l}</button>`).join('')}</div><label>Valor (R$)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label></div>
     <div class="box"><div class="row sb"><div class="h3" style="margin:0">Pagamentos</div><button class="btn small" data-act="addpay">+ Pagamento</button></div><div id="f-pays">${paysHtml()}</div><div class="row sb" style="margin-top:10px"><span class="muted">Saldo a receber</span><b id="f-saldo" class="${sal>0.005?'neg':'pos'}">${brl(sal)}</b></div></div>
     <label style="margin-top:12px">Observações<textarea id="f-notes">${esc(F.notes||'')}</textarea></label>
     <div class="box"><div class="row sb"><div class="h3" style="margin:0">Orçamento para enviar</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div></details>`;
@@ -399,6 +399,7 @@ document.addEventListener('click',async ev=>{
   if(el=t.closest('[data-delrate]')){await drop('rates',el.dataset.delrate);return}
   if(el=t.closest('[data-delpay]')){F.payments.splice(+el.dataset.delpay,1);sheet();return}
   if(el=t.closest('[data-bkflat]')){F.flat=el.dataset.bkflat;sheet();return}
+  if(el=t.closest('[data-adjk]')){F.adjKind=el.dataset.adjk;sheet();return}
   if(el=t.closest('[data-bkstatus]')){F.status=el.dataset.bkstatus;sheet();return}
   if(el=t.closest('[data-rvstar]')){rvForm.stars=+el.dataset.rvstar;render();return}
   if(el=t.closest('[data-rvtog]')){const r=S.reviews.find(x=>x.id===el.dataset.rvtog);if(r)await put('reviews',{...r,published:r.published===false});return}
