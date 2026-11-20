@@ -122,7 +122,7 @@ function vCal(){
     h+=`<div class="card c6"><div class="card-h"><h2>${FLATS[fid].name}</h2><span class="muted" style="font-size:13px">${FLATS[fid].loc}</span></div><div class="mon">${c}</div></div>`;
   });
   const hm=holidaysIn(calMonth+'-01',calMonth+'-'+String(days).padStart(2,'0'));
-  h+=`</div><div class="hlist">${hm.length?hm.map(x=>`<span><i class="hdot ${x.t==='fac'?'fac':''}"></i><b>${x.d.slice(8,10)}/${x.d.slice(5,7)}</b> ${esc(x.n)}${x.t==='fac'?' (ponto facultativo)':''}</span>`).join(''):'<span class="muted">Sem feriados neste mês.</span>'}</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Pré-reserva</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span><i class="hdot" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Feriado</span><span><i class="hdot fac" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Ponto facultativo</span><span>Toque num dia livre para reservar</span></div>`;
+  h+=`</div><div class="hlist">${hm.length?hm.map(x=>`<span><i class="hdot ${x.t==='fac'?'fac':''}"></i><b>${x.d.slice(8,10)}/${x.d.slice(5,7)}</b> ${esc(x.n)}${x.t==='fac'?' (ponto facultativo)':''}</span>`).join(''):'<span class="muted">Sem feriados neste mês.</span>'}</div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 16%,var(--surface))"></i>Confirmada</span><span><i style="background:color-mix(in srgb,var(--sand) 22%,var(--surface))"></i>Orçamento</span><span><i style="background:var(--line)"></i>Bloqueio dos donos</span><span><i class="hdot" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Feriado</span><span><i class="hdot fac" style="display:inline-block;vertical-align:1px;margin-right:5px"></i>Ponto facultativo</span><span>Toque num dia livre para reservar</span></div>`;
   return ['Calendário',monthPill(calMonth,'mprev','mnext'),'<button class="btn" data-act="newblock">Bloquear datas</button><button class="btn primary" data-act="newres">Nova reserva</button>',h];
 }
 
@@ -140,7 +140,7 @@ function vRes(){
   l.forEach(b=>{
     const n=nightsBetween(b.checkin,b.checkout),ini=(b.kind==='bloqueio'?'B':(b.guest||'?')[0]).toUpperCase();
     if(b.kind==='bloqueio')h+=`<div class="item" data-bk="${b.id}"><div class="av" style="--c:#6F6B68">${ini}</div><div><b>Bloqueio: ${esc(b.guest||'dos donos')}</b><span class="muted">${FLATS[b.flat].name} · ${dm(b.checkin)} a ${dm(b.checkout)} · ${n} noite${n>1?'s':''}</span></div><div class="r"><span class="tag t-block">Bloqueado</span></div></div>`;
-    else{const sal=b.total-paid(b),pill=!live(b)?'<span class="tag t-bad">Cancelada</span>':b.status==='pre'?'<span class="tag t-warn">Pré-reserva</span>':(sal>0.005?`<span class="tag t-warn">Saldo ${brl(sal)}</span>`:'<span class="tag t-ok">Quitada</span>');
+    else{const sal=b.total-paid(b),pill=!live(b)?'<span class="tag t-bad">Cancelada</span>':b.status==='pre'?'<span class="tag t-warn">Orçamento</span>':(sal>0.005?`<span class="tag t-warn">Saldo ${brl(sal)}</span>`:'<span class="tag t-ok">Quitada</span>');
       h+=`<div class="item" data-bk="${b.id}"><div class="av">${esc(ini)}</div><div><b>${esc(b.guest||'Sem nome')}</b><span class="muted">${FLATS[b.flat].name} · ${dm(b.checkin)} a ${dm(b.checkout)} · ${n} noite${n>1?'s':''}${b.guests?` · ${b.guests} pessoas`:''}</span></div><div class="r"><b>${brl(b.total)}</b>${pill}</div></div>`}
   });
   return ['Reservas','','<button class="btn primary" data-act="newres">Nova reserva</button>',h+'</div>'];
@@ -310,7 +310,7 @@ function vRev(){
 function vSite(){
   const url=location.href.replace(/painel\.html.*$/,'');
   return ['Site dos hóspedes','','',`<div class="grid"><div class="card c7"><h2>Página pública</h2><div class="sub">Mostra só os dias livres e ocupados dos dois flats. O hóspede escolhe as datas e chama no WhatsApp.</div><div class="linkbox" id="sitelink">${esc(url)}</div><div class="row" style="margin-top:12px"><button class="btn primary" data-act="copysite">Copiar link</button><a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Abrir</a></div></div>
-  <div class="card c5"><h2>O que o hóspede vê</h2><div class="sub">Em tempo real, a partir das suas reservas.</div><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px"><li>Reservas confirmadas, pré-reservas e bloqueios aparecem como ocupado.</li><li>Reserva cancelada libera as datas.</li><li>Nomes, valores e pagamentos nunca aparecem.</li><li>Quem não tem login não consegue editar nada.</li></ul></div></div>`];
+  <div class="card c5"><h2>O que o hóspede vê</h2><div class="sub">Em tempo real, a partir das suas reservas.</div><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px"><li>Reservas confirmadas e bloqueios aparecem como ocupado. Orçamentos não bloqueiam as datas.</li><li>Reserva cancelada libera as datas.</li><li>Nomes, valores e pagamentos nunca aparecem.</li><li>Quem não tem login não consegue editar nada.</li></ul></div></div>`];
 }
 
 /* ---------- janela de reserva ---------- */
@@ -342,8 +342,8 @@ function sheet(keep){
     <label style="margin-top:10px">WhatsApp<input id="f-phone" inputmode="tel" value="${esc(F.phone||'')}" placeholder="81 90000-0000"></label>
     <label style="margin-top:10px">Quantas pessoas (até 8)<input id="f-guests" inputmode="numeric" value="${esc(F.guests)}"></label>`;
     b+=`<div class="tot"><span>Total da estadia</span><b id="f-total">${brl(q.total)}</b><small id="f-totsub">${n} noite${n===1?'':'s'}, com a limpeza</small></div>`;
-    if(F.id)b+=step(4,'Situação da reserva')+`<div class="mk">${[['pre','Pré-reserva'],['confirmada','Confirmada'],['cancelada','Cancelada']].map(([k,l])=>`<button type="button" data-bkstatus="${k}" aria-pressed="${F.status===k}">${l}</button>`).join('')}</div>`;
-    else b+=`<div class="prenote"><b>Será salva como pré-reserva.</b> Quando o sinal for pago, abra a reserva e mude para Confirmada.</div>`;
+    if(F.id)b+=step(4,'Situação da reserva')+`<div class="mk">${[['pre','Orçamento'],['confirmada','Confirmada'],['cancelada','Cancelada']].map(([k,l])=>`<button type="button" data-bkstatus="${k}" aria-pressed="${F.status===k}">${l}</button>`).join('')}</div>`;
+    else b+=`<div class="prenote"><b>Será salvo como orçamento (não bloqueia as datas).</b> Quando o sinal for pago, abra a reserva e mude para Confirmada.</div>`;
     b+=`<details class="more"${F.id?' open':''}><summary>Mais opções: pagamentos, desconto, observações</summary>
     <div class="box"><div class="h3">Como o total foi calculado</div><div class="quote" id="f-quote">${quoteHtml(q)}</div></div>
     <div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:6px">Desconto ou acréscimo (opcional)</div><div class="mk" style="margin-bottom:8px">${[['desc','Desconto'],['acr','Acréscimo']].map(([k,l])=>`<button type="button" data-adjk="${k}" aria-pressed="${F.adjKind===k}">${l}</button>`).join('')}</div><label>Valor (R$)<input id="f-adjust" inputmode="decimal" value="${esc(F.adjust)}" placeholder="0"></label></div>
@@ -352,7 +352,7 @@ function sheet(keep){
     <div class="box"><div class="row sb"><div class="h3" style="margin:0">Orçamento para enviar</div><button class="btn small" data-act="copyquote">Copiar</button></div><textarea id="f-msg" readonly style="margin-top:8px;min-height:130px">${esc(msgText())}</textarea></div></details>`;
   }
   m.innerHTML=`<div class="scrim" data-scrim><div class="sheet bk" role="dialog"><div class="sh-h"><h2>${title}</h2><button class="btn" data-act="closesheet">Fechar ✕</button></div><div class="sh-b">${b}</div>
-  <div class="sh-f"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">${bl?'Salvar bloqueio':(F.id?'Salvar':'Salvar pré-reserva')}</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
+  <div class="sh-f"><button class="btn primary" data-act="savesheet" style="flex:1;justify-content:center">${bl?'Salvar bloqueio':(F.id?'Salvar':'Salvar orçamento')}</button>${F.id?(F.confirmDelete?'<button class="btn danger" data-act="delyes">Confirmar exclusão</button>':'<button class="btn danger" data-act="delask">Excluir</button>'):''}</div></div></div>`;
   document.body.classList.add('modal-open');
 }
 function live_(){
